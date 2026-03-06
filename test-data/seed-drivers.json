@@ -1,0 +1,222 @@
+[
+  {
+    "full_name": "Chinedu Okafor",
+    "license_no": "LAG-23-482731",
+    "plate_no": "ABC-1023",
+    "contact": {
+      "phone": "+2348012345678",
+      "email": "chinedu.okafor@gmail.com"
+    },
+    "status": "Active",
+    "strike_count": 0
+  },
+  {
+    "full_name": "Aisha Bello",
+    "license_no": "KAN-19-763452",
+    "plate_no": "KJA-4589",
+    "contact": {
+      "phone": "+2348098765432",
+      "email": "aisha.bello@yahoo.com"
+    },
+    "status": "Active",
+    "strike_count": 1
+  },
+  {
+    "full_name": "Tunde Adeyemi",
+    "license_no": "OYO-21-654987",
+    "plate_no": "IBD-3345",
+    "contact": {
+      "phone": "+2348034567890",
+      "email": "tunde.adeyemi@outlook.com"
+    },
+    "status": "Flagged",
+    "strike_count": 4
+  },
+  {
+    "full_name": "Ngozi Nwankwo",
+    "license_no": "ENU-18-345219",
+    "plate_no": "ENU-7781",
+    "contact": {
+      "phone": "+2348067891234",
+      "email": "ngozi.nwankwo@gmail.com"
+    },
+    "status": "Active",
+    "strike_count": 0
+  },
+  {
+    "full_name": "Ibrahim Musa",
+    "license_no": "KAD-20-918273",
+    "plate_no": "KAD-6622",
+    "contact": {
+      "phone": "+2348123456789",
+      "email": "ibrahim.musa@yahoo.com"
+    },
+    "status": "Active",
+    "strike_count": 2
+  },
+  {
+    "full_name": "Blessing Eze",
+    "license_no": "IMO-22-774512",
+    "plate_no": "OWR-5544",
+    "contact": {
+      "phone": "+2348145678901",
+      "email": "blessing.eze@gmail.com"
+    },
+    "status": "Active",
+    "strike_count": 0
+  },
+  {
+    "full_name": "Yusuf Abdullahi",
+    "license_no": "KTS-17-129834",
+    "plate_no": "KTS-9901",
+    "contact": {
+      "phone": "+2348176543210",
+      "email": "yusuf.abdullahi@outlook.com"
+    },
+    "status": "Flagged",
+    "strike_count": 5
+  },
+  {
+    "full_name": "Adaobi Okoye",
+    "license_no": "ANM-24-564738",
+    "plate_no": "ANM-4432",
+    "contact": {
+      "phone": "+2348187654321",
+      "email": "adaobi.okoye@gmail.com"
+    },
+    "status": "Active",
+    "strike_count": 0
+  },
+  {
+    "full_name": "Emeka Obi",
+    "license_no": "RIV-16-837261",
+    "plate_no": "PHC-2247",
+    "contact": {
+      "phone": "+2348091122334",
+      "email": "emeka.obi@yahoo.com"
+    },
+    "status": "Active",
+    "strike_count": 3
+  },
+  {
+    "full_name": "Fatima Sani",
+    "license_no": "SOK-15-998877",
+    "plate_no": "SOK-7712",
+    "contact": {
+      "phone": "+2348023456781",
+      "email": "fatima.sani@gmail.com"
+    },
+    "status": "Active",
+    "strike_count": 0
+  },
+  {
+    "full_name": "Oluwaseun Adebayo",
+    "license_no": "OND-23-221144",
+    "plate_no": "AKR-6678",
+    "contact": {
+      "phone": "+2348135792468",
+      "email": "oluwaseun.adebayo@outlook.com"
+    },
+    "status": "Active",
+    "strike_count": 0
+  },
+  {
+    "full_name": "Samuel Etim",
+    "license_no": "CRS-18-556677",
+    "plate_no": "CAL-8821",
+    "contact": {
+      "phone": "+2348167894501",
+      "email": "samuel.etim@gmail.com"
+    },
+    "status": "Active",
+    "strike_count": 0
+  },
+  {
+    "full_name": "Grace Onah",
+    "license_no": "BEN-21-334455",
+    "plate_no": "BEN-1290",
+    "contact": {
+      "phone": "+2348076543298",
+      "email": "grace.onah@yahoo.com"
+    },
+    "status": "Flagged",
+    "strike_count": 2
+  },
+  {
+    "full_name": "Hassan Garba",
+    "license_no": "ZAM-19-778899",
+    "plate_no": "ZAM-4410",
+    "contact": {
+      "phone": "+2348112233445",
+      "email": "hassan.garba@gmail.com"
+    },
+    "status": "Active",
+    "strike_count": 0
+  },
+  {
+    "full_name": "Victoria Udo",
+    "license_no": "AKW-20-667788",
+    "plate_no": "UYO-3321",
+    "contact": {
+      "phone": "+2348198765402",
+      "email": "victoria.udo@outlook.com"
+    },
+    "status": "Active",
+    "strike_count": 0
+  },
+  {
+    "full_name": "Daniel Ojo",
+    "license_no": "EKI-22-112358",
+    "plate_no": "ADO-5577",
+    "contact": {
+      "phone": "+2348031122445",
+      "email": "daniel.ojo@gmail.com"
+    },
+    "status": "Active",
+    "strike_count": 0
+  },
+  {
+    "full_name": "Maryam Lawal",
+    "license_no": "KWA-18-445566",
+    "plate_no": "ILR-9002",
+    "contact": {
+      "phone": "+2348056677889",
+      "email": "maryam.lawal@yahoo.com"
+    },
+    "status": "Active",
+    "strike_count": 0
+  },
+  {
+    "full_name": "Chukwuemeka Nnamdi",
+    "license_no": "ABJ-24-778812",
+    "plate_no": "ABJ-3210",
+    "contact": {
+      "phone": "+2348102345678",
+      "email": "chukwuemeka.nnamdi@gmail.com"
+    },
+    "status": "Active",
+    "strike_count": 0
+  },
+  {
+    "full_name": "Rukayat Ajibola",
+    "license_no": "OGN-17-665544",
+    "plate_no": "ABK-7788",
+    "contact": {
+      "phone": "+2348181122334",
+      "email": "rukayat.ajibola@outlook.com"
+    },
+    "status": "Active",
+    "strike_count": 0
+  },
+  {
+    "full_name": "Peter Nwosu",
+    "license_no": "EBN-16-990011",
+    "plate_no": "EBN-5543",
+    "contact": {
+      "phone": "+2348045566778",
+      "email": "peter.nwosu@gmail.com"
+    },
+    "status": "Active",
+    "strike_count": 0
+  }
+]

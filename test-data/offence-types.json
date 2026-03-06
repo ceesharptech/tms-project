@@ -1,0 +1,107 @@
+[
+  {
+    "name": "Speeding",
+    "description": "Driving above the legally permitted speed limit on highways or urban roads. Increases the risk of accidents and reduces driver reaction time.",
+    "base_fine": 20000,
+    "strike_weight": 2,
+    "severity": "Moderate"
+  },
+  {
+    "name": "Running a Red Light",
+    "description": "Failing to stop at a traffic light when it shows red. This offence significantly endangers pedestrians and other motorists.",
+    "base_fine": 30000,
+    "strike_weight": 3,
+    "severity": "Severe"
+  },
+  {
+    "name": "Driving Without Seatbelt",
+    "description": "Operating a vehicle without wearing a seatbelt. This reduces personal safety in the event of a collision.",
+    "base_fine": 10000,
+    "strike_weight": 1,
+    "severity": "Minor"
+  },
+  {
+    "name": "Using Phone While Driving",
+    "description": "Using a handheld mobile device while operating a vehicle. Distracted driving greatly increases crash risk.",
+    "base_fine": 15000,
+    "strike_weight": 2,
+    "severity": "Moderate"
+  },
+  {
+    "name": "Driving Without Valid License",
+    "description": "Operating a vehicle without a valid driver's license issued by the appropriate authority. Indicates non-compliance with driver certification laws.",
+    "base_fine": 25000,
+    "strike_weight": 3,
+    "severity": "Severe"
+  },
+  {
+    "name": "Illegal Parking",
+    "description": "Parking a vehicle in restricted or unauthorized areas such as intersections or pedestrian crossings. Causes traffic obstruction and safety hazards.",
+    "base_fine": 5000,
+    "strike_weight": 1,
+    "severity": "Minor"
+  },
+  {
+    "name": "Driving Against Traffic",
+    "description": "Driving in the opposite direction of designated traffic flow. This creates a high risk of head-on collisions.",
+    "base_fine": 40000,
+    "strike_weight": 3,
+    "severity": "Severe"
+  },
+  {
+    "name": "Failure to Obey Traffic Signs",
+    "description": "Ignoring regulatory or warning traffic signs on the road. Undermines road order and safety compliance.",
+    "base_fine": 15000,
+    "strike_weight": 2,
+    "severity": "Moderate"
+  },
+  {
+    "name": "Overloading Passengers",
+    "description": "Carrying more passengers than the vehicle is legally permitted to transport. Compromises vehicle stability and passenger safety.",
+    "base_fine": 20000,
+    "strike_weight": 2,
+    "severity": "Moderate"
+  },
+  {
+    "name": "Driving Without Vehicle Registration",
+    "description": "Operating a vehicle without valid registration documents. Violates regulatory compliance requirements.",
+    "base_fine": 25000,
+    "strike_weight": 3,
+    "severity": "Severe"
+  },
+  {
+    "name": "Failure to Use Helmet (Motorcyclist)",
+    "description": "Riding a motorcycle without wearing an approved safety helmet. Increases the likelihood of fatal head injuries.",
+    "base_fine": 10000,
+    "strike_weight": 1,
+    "severity": "Minor"
+  },
+  {
+    "name": "Reckless Driving",
+    "description": "Operating a vehicle in a manner that shows willful disregard for safety rules. Poses serious danger to road users.",
+    "base_fine": 50000,
+    "strike_weight": 3,
+    "severity": "Severe"
+  },
+  {
+    "name": "Expired Vehicle Insurance",
+    "description": "Driving a vehicle without valid third-party insurance coverage. Exposes other road users to financial risk in accidents.",
+    "base_fine": 20000,
+    "strike_weight": 2,
+    "severity": "Moderate"
+  },
+  {
+    "name": "Obstructing Traffic",
+    "description": "Stopping or parking a vehicle in a way that blocks the normal flow of traffic. Causes congestion and potential hazards.",
+    "base_fine": 10000,
+    "strike_weight": 1,
+    "severity": "Minor"
+  },
+  {
+    "name": "Driving Under the Influence",
+    "description": "Operating a vehicle while impaired by alcohol or drugs. Severely reduces judgment, coordination, and reaction time.",
+    "base_fine": 45000,
+    "strike_weight": 3,
+    "severity": "Severe"
+  }
+]

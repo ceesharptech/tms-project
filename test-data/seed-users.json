@@ -1,0 +1,23 @@
+[
+  {
+    "officer_id": "000001",
+    "email": "eniolaamusu6@gmail.com",
+    "password": "Allowme2006!",
+    "role": "admin",
+    "full_name": "System Administrator"
+  },
+  {
+    "officer_id": "100001",
+    "email": "officer@ddits.com",
+    "password": "Officer123!",
+    "role": "officer",
+    "full_name": "John Mensah"
+  },
+  {
+    "officer_id": "100002",
+    "email": "officer2@ddits.com",
+    "password": "Officer123!",
+    "role": "officer",
+    "full_name": "Amina Bello"
+  }
+]
