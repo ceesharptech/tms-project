@@ -1,0 +1,141 @@
+# DDITS — Development Progress Tracker
+
+> **Project:** Digital Driver Identification and Traffic Offence Penalty System
+> **Last Updated:** 2026-03-07
+> **Developer:** Solo (Final Year University Project)
+
+---
+
+## Current Phase
+
+**Phase 2 — Authentication System**
+
+**Status:** NOT STARTED
+
+---
+
+## Current Tasks
+
+- [ ] Create `backend/routes/auth.js` — login, logout, refresh-token endpoints
+- [ ] Implement JWT access token generation (30 min expiry)
+- [ ] Implement refresh token generation (7 day expiry) stored in HttpOnly cookie
+- [ ] Write `POST /api/auth/login` — validate email + bcrypt compare → return JWT
+- [ ] Write `POST /api/auth/logout` — clear refresh cookie, invalidate session
+- [ ] Write `POST /api/auth/refresh` — validate refresh token → issue new access token
+- [ ] Write `GET /api/auth/me` — return current user profile from JWT claims
+- [ ] Mount auth routes in `backend/server.js`
+- [ ] Log all login/logout events to `audit_logs` table
+- [ ] Validate all inputs (email format, password length)
+- [ ] Test with seeded admin and officer accounts
+
+---
+
+## Blockers
+
+- None currently identified
+
+---
+
+## Completed
+
+### Phase 0 — Project Scaffolding
+
+- [x] Created `frontend/` — React 18 + Vite (port 5173)
+- [x] Created `backend/` — Express.js (port 5000)
+- [x] Created `face-service/` — FastAPI Python (port 8000)
+- [x] Health check endpoint at `GET /health` (backend)
+- [x] Health check endpoint at `GET /health` (face-service)
+- [x] `.env.example` files for all three services
+- [x] `.env` files populated with real credentials (not committed)
+- [x] `.gitignore` updated
+- [x] `README.md` created with setup instructions
+
+**Files Created / Affected — Phase 0**
+
+| File                                 | Action             |
+| ------------------------------------ | ------------------ |
+| `frontend/vite.config.js`            | Created + modified |
+| `frontend/src/App.jsx`               | Created            |
+| `frontend/src/main.jsx`              | Created            |
+| `frontend/.env.example`              | Created            |
+| `frontend/package.json`              | Created            |
+| `backend/server.js`                  | Created + modified |
+| `backend/services/supabase.js`       | Created + modified |
+| `backend/middleware/auth.js`         | Created + modified |
+| `backend/middleware/roleCheck.js`    | Created + modified |
+| `backend/middleware/errorHandler.js` | Created + modified |
+| `backend/services/faceService.js`    | Created + modified |
+| `backend/services/strikeEngine.js`   | Created + modified |
+| `backend/.env.example`               | Created            |
+| `backend/package.json`               | Created            |
+| `face-service/main.py`               | Created            |
+| `face-service/requirements.txt`      | Created            |
+| `face-service/.env.example`          | Created            |
+| `.gitignore`                         | Modified           |
+| `README.md`                          | Created            |
+
+---
+
+### Phase 1 — Database Schema & Supabase Setup
+
+- [x] Created `users` table with UUID PK, officer_id, email, password_hash, role, full_name
+- [x] Created `drivers` table with face_embedding (JSONB), strike_count, status
+- [x] Created `offences` table with FK references to drivers, users, offence_types
+- [x] Created `offence_types` table with base_fine, strike_weight, severity, is_active
+- [x] Created `penalty_rules` table with strike range tiers and fine multipliers
+- [x] Created `audit_logs` table (immutable — no UPDATE/DELETE policy)
+- [x] Added indexes: `drivers.license_no`, `drivers.plate_no`, `offences.driver_id`, `offences.issued_at`, `offences.officer_id`, `audit_logs.user_id`, `audit_logs.timestamp`
+- [x] Created `update_updated_at()` trigger function for `users` and `drivers`
+- [x] Created `auth_role()` and `auth_sub()` RLS helper functions
+- [x] Enabled RLS on all 6 tables
+- [x] Applied RLS policies: `users` (select own + admin all)
+- [x] Applied RLS policies: `drivers` (select authenticated, insert/update/delete admin)
+- [x] Applied RLS policies: `offences` (select own + admin all, insert authenticated, no delete)
+- [x] Applied RLS policies: `offence_types` (select authenticated, insert/update/delete admin)
+- [x] Applied RLS policies: `penalty_rules` (select authenticated, insert/update/delete admin)
+- [x] Applied RLS policies: `audit_logs` (select + insert authenticated, no update/delete)
+- [x] Seeded 3 users (1 admin, 2 officers) with bcrypt-hashed passwords
+- [x] Seeded 3 penalty rule tiers (0–2 Active, 3–5 Warning, 6+ Flagged)
+- [x] Seeded 15 offence types across Minor / Moderate / Severe severities
+- [x] Seeded 20 driver records with JSONB contact fields
+- [x] Generated TypeScript types at `backend/types/database.types.ts`
+- [x] Saved full migration to `supabase/migrations/001_initial_schema.sql`
+
+**Files Created / Affected — Phase 1**
+
+| File                                         | Action  |
+| -------------------------------------------- | ------- |
+| `supabase/migrations/001_initial_schema.sql` | Created |
+| `backend/types/database.types.ts`            | Created |
+
+---
+
+## Upcoming Phases
+
+| Phase | Name                              | Status         |
+| ----- | --------------------------------- | -------------- |
+| 0     | Project Scaffolding               | ✅ Completed   |
+| 1     | Database Schema & Supabase Setup  | ✅ Completed   |
+| **2** | **Authentication System**         | **🔄 Next**    |
+| 3     | Python Facial Recognition Service | ⬜ Not Started |
+| 4     | Driver Management Backend         | ⬜ Not Started |
+| 5     | Driver Management Frontend        | ⬜ Not Started |
+| 6     | Facial Identification UI          | ⬜ Not Started |
+| 7     | Offence Types & Penalty Rules     | ⬜ Not Started |
+| 8     | Strike Engine & Offence Issuance  | ⬜ Not Started |
+| 9     | Offence History & Audit Logs      | ⬜ Not Started |
+| 10    | Analytics Dashboard               | ⬜ Not Started |
+| 11    | UI Polish & Responsive Design     | ⬜ Not Started |
+| 12    | Testing & Bug Fixes               | ⬜ Not Started |
+| 13    | Documentation & Deployment        | ⬜ Not Started |
+
+---
+
+## Notes
+
+- The `contact` column on `drivers` is stored as **JSONB** (not VARCHAR) to support structured `{phone, email}` payloads.
+- `face_embedding` on `drivers` is JSONB: `{"embedding": [...512 floats...], "model": "ArcFace", "enrolled_at": "..."}` — populated in Phase 3.
+- The Strike Engine (Phase 8) **must** be implemented as a Supabase RPC (stored procedure) to ensure atomicity across `offences`, `drivers`, and `audit_logs`.
+- Backend uses `service_role` key which bypasses RLS — RLS only applies to direct Supabase client calls from the frontend (if any).
+- Seed admin credentials: `eniolaamusu6@gmail.com` / `Allowme2006!`
+- Seed officer credentials: `officer@ddits.com` / `Officer123!`
