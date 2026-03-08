@@ -1,14 +1,14 @@
 # DDITS — Development Progress Tracker
 
 > **Project:** Digital Driver Identification and Traffic Offence Penalty System
-> **Last Updated:** 2026-03-07
+> **Last Updated:** 2026-03-08
 > **Developer:** Solo (Final Year University Project)
 
 ---
 
 ## Current Phase
 
-**Phase 3 — Python Facial Recognition Service**
+**Phase 4 — Express ↔ Face Service Integration**
 
 **Status:** NOT STARTED
 
@@ -16,13 +16,11 @@
 
 ## Current Tasks
 
-- [ ] Build and test `face-service/` DeepFace + ArcFace pipeline in isolation
-- [ ] Implement `POST /identify` endpoint — accept image, return best-match embedding + confidence
-- [ ] Implement `POST /enroll` endpoint — accept driver_id + images, store embeddings
-- [ ] Add face detection pre-check (reject if no face found)
-- [ ] Configure cosine distance threshold (env var `FACE_CONFIDENCE_THRESHOLD=0.4`)
-- [ ] Unit-test with faces from `test-data/faces/`
-- [ ] Verify backend `faceService.js` proxy calls work correctly
+- [ ] Wire `backend/services/faceService.js` to proxy `/enroll` and `/identify` to face-service
+- [ ] Store driver embeddings in Supabase (JSONB column on `drivers` table)
+- [ ] Create `POST /api/drivers/:id/enroll` endpoint (officer role required)
+- [ ] Create `POST /api/identify` endpoint (officer role required)
+- [ ] End-to-end test: enroll driver via Express → Supabase, identify via Express → face-service
 
 ---
 
@@ -69,6 +67,41 @@
 | `face-service/.env.example`          | Created            |
 | `.gitignore`                         | Modified           |
 | `README.md`                          | Created            |
+
+---
+
+### Phase 3 — Python Facial Recognition Service
+
+- [x] Implemented `face-service/main.py` — FastAPI app with `/health`, `/enroll`, `/identify` endpoints
+- [x] Implemented `face-service/models/face_enrollment.py` — validates 3-5 images, extracts ArcFace embeddings, returns averaged 512-float vector
+- [x] Implemented `face-service/models/face_identification.py` — cosine distance comparison, threshold-based match decision
+- [x] Implemented `face-service/utils/image_processing.py` — `validate_image()` (format + min 100×100), `preprocess_for_deepface()` (RGB normalisation)
+- [x] Implemented `face-service/utils/embedding_utils.py` — `compute_cosine_distance()` (scipy), `average_embeddings()` (numpy)
+- [x] Installed `scipy` into venv; updated `requirements.txt`
+- [x] Created `face-service/models/__init__.py` and `face-service/utils/__init__.py`
+- [x] Logging added throughout — model load, enrollment, identification events
+- [x] Enrollment test: Ian_Thorpe 5 images → 512-dim embedding, 200 OK ✅
+- [x] Positive ID test: Ian_Thorpe_0006.jpg → matched=true, confidence=82.05%, distance=0.1795 ✅
+- [x] Negative ID test: Alan_Greenspan_0001.jpg → matched=false, distance=0.9798 ✅
+- [x] Error handling tests: too few images (400), non-image file (400), bad JSON (400) all pass ✅
+- [x] Threshold confirmed at `FACE_CONFIDENCE_THRESHOLD=0.40` (large gap: same-person ~0.18, different-person ~0.98)
+- [x] Test results documented in `test-results/phase3-face-recognition-tests.md`
+
+**Files Created / Affected — Phase 3**
+
+| File                                            | Action                  |
+| ----------------------------------------------- | ----------------------- |
+| `face-service/main.py`                          | Rewritten (full impl)   |
+| `face-service/models/face_enrollment.py`        | Implemented             |
+| `face-service/models/face_identification.py`    | Implemented             |
+| `face-service/utils/image_processing.py`        | Implemented             |
+| `face-service/utils/embedding_utils.py`         | Implemented             |
+| `face-service/models/__init__.py`               | Created                 |
+| `face-service/utils/__init__.py`                | Created                 |
+| `face-service/requirements.txt`                 | Updated (scipy added)   |
+| `test-data/enrollment_result_ian.json`          | Created (test artefact) |
+| `test-results/phase3-face-recognition-tests.md` | Created                 |
+| `PROGRESS.md`                                   | Updated                 |
 
 ---
 

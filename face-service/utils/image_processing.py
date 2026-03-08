@@ -1,16 +1,39 @@
-"""Image pre-processing utilities: resize, normalize, face detection."""
-import base64
+"""Image pre-processing utilities: validation, conversion, normalization."""
 import io
-from PIL import Image
+import logging
+
 import numpy as np
+from PIL import Image
+
+logger = logging.getLogger(__name__)
 
 
-def base64_to_image(b64_string: str) -> Image.Image:
-    """Decode a base64-encoded image string to a PIL Image."""
-    image_data = base64.b64decode(b64_string)
-    return Image.open(io.BytesIO(image_data))
+def validate_image(image_bytes: bytes) -> np.ndarray:
+    """Check file is valid image, convert to numpy array, validate min dimensions."""
+    try:
+        # Two-pass: verify integrity first, then re-open to read pixels
+        Image.open(io.BytesIO(image_bytes)).verify()
+    except Exception as e:
+        raise ValueError(f"Invalid image format: {e}")
+
+    image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+    img_array = np.array(image)
+
+    h, w = img_array.shape[:2]
+    if h < 100 or w < 100:
+        raise ValueError(
+            f"Image too small: {w}x{h} pixels — minimum 100x100 required"
+        )
+
+    return img_array
 
 
-def image_to_numpy(image: Image.Image) -> np.ndarray:
-    """Convert a PIL Image to a numpy array (RGB)."""
-    return np.array(image.convert("RGB"))
+def preprocess_for_deepface(image_array: np.ndarray) -> np.ndarray:
+    """Ensure the array is in RGB uint8 format expected by DeepFace."""
+    if image_array.ndim == 2:
+        # Grayscale → RGB
+        image_array = np.stack([image_array] * 3, axis=-1)
+    elif image_array.shape[2] == 4:
+        # RGBA → RGB
+        image_array = image_array[:, :, :3]
+    return image_array

@@ -7,4 +7,5 @@ opencv-python==4.11.0.86
 deepface==0.0.93
 tf-keras==2.19.0
 numpy==1.26.4
+scipy
 httpx==0.28.1
