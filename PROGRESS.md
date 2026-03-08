@@ -1,14 +1,14 @@
 # DDITS — Development Progress Tracker
 
 > **Project:** Digital Driver Identification and Traffic Offence Penalty System
-> **Last Updated:** 2026-03-08
+> **Last Updated:** 2026-03-09
 > **Developer:** Solo (Final Year University Project)
 
 ---
 
 ## Current Phase
 
-**Phase 4 — Express ↔ Face Service Integration**
+**Phase 5 — Driver Management Frontend**
 
 **Status:** NOT STARTED
 
@@ -16,11 +16,13 @@
 
 ## Current Tasks
 
-- [ ] Wire `backend/services/faceService.js` to proxy `/enroll` and `/identify` to face-service
-- [ ] Store driver embeddings in Supabase (JSONB column on `drivers` table)
-- [ ] Create `POST /api/drivers/:id/enroll` endpoint (officer role required)
-- [ ] Create `POST /api/identify` endpoint (officer role required)
-- [ ] End-to-end test: enroll driver via Express → Supabase, identify via Express → face-service
+- [ ] Create `frontend/src/pages/admin/DriversPage.jsx` — paginated driver list with search bar
+- [ ] Create `frontend/src/pages/admin/DriverDetailPage.jsx` — driver profile, strike history, face enrolment status
+- [ ] Create `frontend/src/components/drivers/DriverCard.jsx` — card component used in list
+- [ ] Create `frontend/src/components/drivers/CreateDriverModal.jsx` — form modal (name, license, plate, contact)
+- [ ] Create `frontend/src/components/drivers/FaceEnrollModal.jsx` — 3–5 image upload with preview, progress state
+- [ ] Wire all views to `frontend/src/services/api.js` Axios instance (auth interceptors already in place)
+- [ ] Add `/dashboard/admin/drivers` and `/dashboard/admin/drivers/:id` routes to `App.jsx`
 
 ---
 
@@ -67,6 +69,41 @@
 | `face-service/.env.example`          | Created            |
 | `.gitignore`                         | Modified           |
 | `README.md`                          | Created            |
+
+---
+
+### Phase 4 — Driver Management Backend
+
+- [x] Implemented `backend/routes/drivers.js` — all 7 REST endpoints (list, get, create, update, delete, search, enroll-face)
+- [x] Implemented `backend/middleware/validation.js` — `validateDriverCreate` and `validateDriverUpdate` with field whitelisting
+- [x] Rewrote `backend/services/faceService.js` — multipart FormData forwarding via `form-data` + axios (replaced broken JSON stub)
+- [x] Applied Supabase migration `add_deleted_status_to_drivers` — added `'Deleted'` to `drivers_status_check` constraint (enables soft delete)
+- [x] Mounted `/api/drivers` router in `backend/server.js`
+- [x] Installed `multer` and `form-data` Node packages
+- [x] `GET /api/drivers` — paginated list, excludes Deleted records, officer + admin access ✅
+- [x] `GET /api/drivers/:id` — returns driver with `face_enrolled` boolean (raw embedding stripped) ✅
+- [x] `POST /api/drivers` — creates driver, returns 409 on duplicate license/plate (admin only) ✅
+- [x] `PUT /api/drivers/:id` — partial update; blocks `strike_count` / `face_embedding` writes (admin only) ✅
+- [x] `DELETE /api/drivers/:id` — soft delete (sets `status='Deleted'`), prevents double-delete ✅
+- [x] `POST /api/drivers/search` — ilike name search, exact license/plate search ✅
+- [x] `POST /api/drivers/:id/enroll-face` — 3–5 image upload, calls Python service, stores 512-dim ArcFace embedding in Supabase JSONB ✅
+- [x] RBAC enforced: create/update/delete/enroll = admin only; list/get/search = officer + admin
+- [x] End-to-end enrollment verified: Chinedu Okafor (`68144771-8505-4b50-b80d-43ba3b577322`) has ArcFace embedding in Supabase
+- [x] 18/18 endpoint tests passing; results documented in `test-results/phase4-testing-results.md`
+- [x] Postman collection exported to `test-results/phase4-driver-api.postman_collection.json`
+
+**Files Created / Affected — Phase 4**
+
+| File                                                     | Action                          |
+| -------------------------------------------------------- | ------------------------------- |
+| `backend/routes/drivers.js`                              | Created                         |
+| `backend/middleware/validation.js`                       | Created                         |
+| `backend/services/faceService.js`                        | Rewritten (multipart FormData)  |
+| `backend/server.js`                                      | Modified (mount drivers router) |
+| `supabase/migrations/002_add_deleted_status.sql`         | Created (via Supabase API)      |
+| `test-results/phase4-testing-results.md`                 | Created                         |
+| `test-results/phase4-driver-api.postman_collection.json` | Created                         |
+| `PROGRESS.md`                                            | Updated                         |
 
 ---
 
@@ -176,22 +213,22 @@
 
 ## Upcoming Phases
 
-| Phase | Name                                  | Status         |
-| ----- | ------------------------------------- | -------------- |
-| 0     | Project Scaffolding                   | ✅ Completed   |
-| 1     | Database Schema & Supabase Setup      | ✅ Completed   |
-| 2     | Authentication System                 | ✅ Completed   |
-| **3** | **Python Facial Recognition Service** | **🔄 Next**    |
-| 4     | Driver Management Backend             | ⬜ Not Started |
-| 5     | Driver Management Frontend            | ⬜ Not Started |
-| 6     | Facial Identification UI              | ⬜ Not Started |
-| 7     | Offence Types & Penalty Rules         | ⬜ Not Started |
-| 8     | Strike Engine & Offence Issuance      | ⬜ Not Started |
-| 9     | Offence History & Audit Logs          | ⬜ Not Started |
-| 10    | Analytics Dashboard                   | ⬜ Not Started |
-| 11    | UI Polish & Responsive Design         | ⬜ Not Started |
-| 12    | Testing & Bug Fixes                   | ⬜ Not Started |
-| 13    | Documentation & Deployment            | ⬜ Not Started |
+| Phase | Name                              | Status         |
+| ----- | --------------------------------- | -------------- |
+| 0     | Project Scaffolding               | ✅ Completed   |
+| 1     | Database Schema & Supabase Setup  | ✅ Completed   |
+| 2     | Authentication System             | ✅ Completed   |
+| 3     | Python Facial Recognition Service | ✅ Completed   |
+| 4     | Driver Management Backend         | ✅ Completed   |
+| **5** | **Driver Management Frontend**    | **🔄 Current** |
+| 6     | Facial Identification UI          | ⬜ Not Started |
+| 7     | Offence Types & Penalty Rules     | ⬜ Not Started |
+| 8     | Strike Engine & Offence Issuance  | ⬜ Not Started |
+| 9     | Offence History & Audit Logs      | ⬜ Not Started |
+| 10    | Analytics Dashboard               | ⬜ Not Started |
+| 11    | UI Polish & Responsive Design     | ⬜ Not Started |
+| 12    | Testing & Bug Fixes               | ⬜ Not Started |
+| 13    | Documentation & Deployment        | ⬜ Not Started |
 
 ---
 

@@ -1,0 +1,440 @@
+{
+  "info": {
+    "_postman_id": "tms-phase4-drivers",
+    "name": "TOMS — Phase 4 Driver Management API",
+    "description": "Driver CRUD, search, and face enrollment endpoints for TOMS backend.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:5000", "type": "string" },
+    { "key": "admin_token", "value": "", "type": "string" },
+    { "key": "officer_token", "value": "", "type": "string" },
+    {
+      "key": "driver_id",
+      "value": "68144771-8505-4b50-b80d-43ba3b577322",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth — Login (Admin)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const r = pm.response.json();",
+              "pm.collectionVariables.set('admin_token', r.data.accessToken);",
+              "pm.test('Login success', () => pm.expect(r.success).to.be.true);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/api/auth/login",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"identifier\":\"eniolaamusu6@gmail.com\",\"password\":\"Allowme2006!\"}"
+        }
+      }
+    },
+    {
+      "name": "Auth — Login (Officer)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const r = pm.response.json();",
+              "pm.collectionVariables.set('officer_token', r.data.accessToken);",
+              "pm.test('Login success', () => pm.expect(r.success).to.be.true);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/api/auth/login",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"identifier\":\"100001\",\"password\":\"Officer123!\"}"
+        }
+      }
+    },
+    {
+      "name": "Drivers — List All",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "const r = pm.response.json();",
+              "pm.test('Has drivers array', () => pm.expect(r.data.drivers).to.be.an('array'));",
+              "pm.test('Has total count', () => pm.expect(r.data.total).to.be.above(0));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/drivers",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+        ]
+      }
+    },
+    {
+      "name": "Drivers — List (Paginated limit=5)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/drivers?limit=5&offset=0",
+          "query": [
+            { "key": "limit", "value": "5" },
+            { "key": "offset", "value": "0" }
+          ]
+        },
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+        ]
+      }
+    },
+    {
+      "name": "Drivers — Get By ID",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "const r = pm.response.json();",
+              "pm.test('Has face_enrolled field', () => pm.expect(r.data).to.have.property('face_enrolled'));",
+              "pm.test('No raw embedding exposed', () => pm.expect(r.data.face_embedding).to.be.undefined);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/drivers/{{driver_id}}",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+        ]
+      }
+    },
+    {
+      "name": "Drivers — Get By ID (404)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('404 Not Found', () => pm.response.to.have.status(404));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/drivers/00000000-0000-0000-0000-000000000000",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+        ]
+      }
+    },
+    {
+      "name": "Drivers — Create (Admin)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('201 Created', () => pm.response.to.have.status(201));",
+              "const r = pm.response.json();",
+              "pm.collectionVariables.set('new_driver_id', r.data.id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/api/drivers",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"full_name\":\"Test Driver Phase4\",\"license_no\":\"ZZZ9990001A\",\"plate_no\":\"TST-000ZZ\",\"contact\":\"testphase4@example.com\"}"
+        }
+      }
+    },
+    {
+      "name": "Drivers — Create (Duplicate license → 409)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('409 Conflict', () => pm.response.to.have.status(409));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/api/drivers",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"full_name\":\"Duplicate\",\"license_no\":\"ZZZ9990001A\"}"
+        }
+      }
+    },
+    {
+      "name": "Drivers — Create (Officer → 403)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('403 Forbidden', () => pm.response.to.have.status(403));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/api/drivers",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{officer_token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"full_name\":\"Should Fail\",\"license_no\":\"AAAAA000001\"}"
+        }
+      }
+    },
+    {
+      "name": "Drivers — Update",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "url": "{{base_url}}/api/drivers/{{driver_id}}",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"contact\":\"updated@example.com\"}"
+        }
+      }
+    },
+    {
+      "name": "Drivers — Search by Name",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "const r = pm.response.json();",
+              "pm.test('Found results', () => pm.expect(r.data.count).to.be.above(0));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/api/drivers/search",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"query\":\"Chinedu\",\"searchType\":\"name\"}"
+        }
+      }
+    },
+    {
+      "name": "Drivers — Search by License",
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/api/drivers/search",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"query\":\"LAG-23-482731\",\"searchType\":\"license\"}"
+        }
+      }
+    },
+    {
+      "name": "Drivers — Search by Plate",
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/api/drivers/search",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"query\":\"ABC-1023\",\"searchType\":\"plate\"}"
+        }
+      }
+    },
+    {
+      "name": "Drivers — Search (No Results)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK (not an error)', () => pm.response.to.have.status(200));",
+              "const r = pm.response.json();",
+              "pm.test('Empty array returned', () => pm.expect(r.data.count).to.equal(0));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/api/drivers/search",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"query\":\"NonExistentXYZ\",\"searchType\":\"name\"}"
+        }
+      }
+    },
+    {
+      "name": "Drivers — Enroll Face (3-5 images)",
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/api/drivers/{{driver_id}}/enroll-face",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "images",
+              "type": "file",
+              "src": "/path/to/Ian_Thorpe_0001.jpg"
+            },
+            {
+              "key": "images",
+              "type": "file",
+              "src": "/path/to/Ian_Thorpe_0002.jpg"
+            },
+            {
+              "key": "images",
+              "type": "file",
+              "src": "/path/to/Ian_Thorpe_0003.jpg"
+            },
+            {
+              "key": "images",
+              "type": "file",
+              "src": "/path/to/Ian_Thorpe_0004.jpg"
+            },
+            {
+              "key": "images",
+              "type": "file",
+              "src": "/path/to/Ian_Thorpe_0005.jpg"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Drivers — Enroll Face (Already enrolled → 400)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('400 Already enrolled', () => pm.response.to.have.status(400));",
+              "const r = pm.response.json();",
+              "pm.test('Correct code', () => pm.expect(r.code).to.equal('ALREADY_ENROLLED'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/api/drivers/{{driver_id}}/enroll-face",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "images",
+              "type": "file",
+              "src": "/path/to/Ian_Thorpe_0001.jpg"
+            },
+            {
+              "key": "images",
+              "type": "file",
+              "src": "/path/to/Ian_Thorpe_0002.jpg"
+            },
+            {
+              "key": "images",
+              "type": "file",
+              "src": "/path/to/Ian_Thorpe_0003.jpg"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Drivers — Delete (Soft)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "const r = pm.response.json();",
+              "pm.test('Success message', () => pm.expect(r.success).to.be.true);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "url": "{{base_url}}/api/drivers/{{new_driver_id}}",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+        ]
+      }
+    }
+  ]
+}
