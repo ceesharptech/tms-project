@@ -1,13 +1,25 @@
-const roleCheck = (...allowedRoles) => {
+/**
+ * requireRole — role-based access control middleware factory.
+ * Usage: requireRole(['admin'])  or  requireRole(['officer', 'admin'])
+ */
+const requireRole = (allowedRoles) => {
   return (req, res, next) => {
     if (!req.user) {
-      return res.status(401).json({ error: "Not authenticated" });
+      return res.status(401).json({
+        error: true,
+        message: "Not authenticated",
+        code: "NOT_AUTHENTICATED",
+      });
     }
     if (!allowedRoles.includes(req.user.role)) {
-      return res.status(403).json({ error: "Insufficient permissions" });
+      return res.status(403).json({
+        error: true,
+        message: "Forbidden — insufficient permissions",
+        code: "FORBIDDEN",
+      });
     }
     next();
   };
 };
 
-module.exports = roleCheck;
+module.exports = { requireRole };

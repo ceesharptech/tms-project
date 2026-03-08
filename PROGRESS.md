@@ -8,7 +8,7 @@
 
 ## Current Phase
 
-**Phase 2 — Authentication System**
+**Phase 3 — Python Facial Recognition Service**
 
 **Status:** NOT STARTED
 
@@ -16,17 +16,13 @@
 
 ## Current Tasks
 
-- [ ] Create `backend/routes/auth.js` — login, logout, refresh-token endpoints
-- [ ] Implement JWT access token generation (30 min expiry)
-- [ ] Implement refresh token generation (7 day expiry) stored in HttpOnly cookie
-- [ ] Write `POST /api/auth/login` — validate email + bcrypt compare → return JWT
-- [ ] Write `POST /api/auth/logout` — clear refresh cookie, invalidate session
-- [ ] Write `POST /api/auth/refresh` — validate refresh token → issue new access token
-- [ ] Write `GET /api/auth/me` — return current user profile from JWT claims
-- [ ] Mount auth routes in `backend/server.js`
-- [ ] Log all login/logout events to `audit_logs` table
-- [ ] Validate all inputs (email format, password length)
-- [ ] Test with seeded admin and officer accounts
+- [ ] Build and test `face-service/` DeepFace + ArcFace pipeline in isolation
+- [ ] Implement `POST /identify` endpoint — accept image, return best-match embedding + confidence
+- [ ] Implement `POST /enroll` endpoint — accept driver_id + images, store embeddings
+- [ ] Add face detection pre-check (reject if no face found)
+- [ ] Configure cosine distance threshold (env var `FACE_CONFIDENCE_THRESHOLD=0.4`)
+- [ ] Unit-test with faces from `test-data/faces/`
+- [ ] Verify backend `faceService.js` proxy calls work correctly
 
 ---
 
@@ -76,6 +72,41 @@
 
 ---
 
+### Phase 2 — Authentication System
+
+- [x] Created `backend/utils/jwt.js` — `generateAccessToken`, `generateRefreshToken`, `verifyToken` helpers
+- [x] Created `backend/routes/auth.js` — `POST /api/auth/login`, `POST /api/auth/refresh`, `POST /api/auth/logout`
+- [x] Login accepts officer_id (6-digit numeric) OR email as identifier
+- [x] Password verified with `bcrypt.compare()` — constant-time to prevent user enumeration
+- [x] Refresh token blacklist (in-memory `Set`) — invalidated on logout
+- [x] Updated `backend/middleware/auth.js` — exports `authenticateToken`, uses `verifyToken` helper
+- [x] Updated `backend/middleware/roleCheck.js` — exports `requireRole([ ])`, accepts array of roles
+- [x] Updated `backend/server.js` — mounts `/api/auth`, adds `GET /api/test/officer` and `GET /api/test/admin` test routes
+- [x] Created `frontend/src/services/api.js` — Axios instance with request interceptor (attach token) and response interceptor (auto-refresh on 401)
+- [x] Created `frontend/src/context/AuthContext.jsx` — `useReducer`-based auth state, `login()`, `logout()`, `getUser()`, localStorage persistence
+- [x] Created `frontend/src/pages/Login.jsx` — dark-themed form, accepts officer_id or email, Tailwind styling
+- [x] Created `frontend/src/components/ProtectedRoute.jsx` — redirects to `/login` if unauthenticated, shows 403 if wrong role
+- [x] Updated `frontend/src/App.jsx` — React Router v7 with `/login`, `/dashboard`, `/dashboard/officer/*`, `/dashboard/admin/*` routes; root redirect based on auth state
+- [x] All files pass linter/compiler checks (0 errors)
+
+**Files Created / Affected — Phase 2**
+
+| File                                         | Action               |
+| -------------------------------------------- | -------------------- |
+| `backend/utils/jwt.js`                       | Created              |
+| `backend/routes/auth.js`                     | Created              |
+| `backend/middleware/auth.js`                 | Modified (rewritten) |
+| `backend/middleware/roleCheck.js`            | Modified (rewritten) |
+| `backend/server.js`                          | Modified             |
+| `frontend/src/services/api.js`               | Created              |
+| `frontend/src/context/AuthContext.jsx`       | Created              |
+| `frontend/src/pages/Login.jsx`               | Created              |
+| `frontend/src/components/ProtectedRoute.jsx` | Created              |
+| `frontend/src/App.jsx`                       | Modified (rewritten) |
+| `PROGRESS.md`                                | Updated              |
+
+---
+
 ### Phase 1 — Database Schema & Supabase Setup
 
 - [x] Created `users` table with UUID PK, officer_id, email, password_hash, role, full_name
@@ -112,22 +143,22 @@
 
 ## Upcoming Phases
 
-| Phase | Name                              | Status         |
-| ----- | --------------------------------- | -------------- |
-| 0     | Project Scaffolding               | ✅ Completed   |
-| 1     | Database Schema & Supabase Setup  | ✅ Completed   |
-| **2** | **Authentication System**         | **🔄 Next**    |
-| 3     | Python Facial Recognition Service | ⬜ Not Started |
-| 4     | Driver Management Backend         | ⬜ Not Started |
-| 5     | Driver Management Frontend        | ⬜ Not Started |
-| 6     | Facial Identification UI          | ⬜ Not Started |
-| 7     | Offence Types & Penalty Rules     | ⬜ Not Started |
-| 8     | Strike Engine & Offence Issuance  | ⬜ Not Started |
-| 9     | Offence History & Audit Logs      | ⬜ Not Started |
-| 10    | Analytics Dashboard               | ⬜ Not Started |
-| 11    | UI Polish & Responsive Design     | ⬜ Not Started |
-| 12    | Testing & Bug Fixes               | ⬜ Not Started |
-| 13    | Documentation & Deployment        | ⬜ Not Started |
+| Phase | Name                                  | Status         |
+| ----- | ------------------------------------- | -------------- |
+| 0     | Project Scaffolding                   | ✅ Completed   |
+| 1     | Database Schema & Supabase Setup      | ✅ Completed   |
+| 2     | Authentication System                 | ✅ Completed   |
+| **3** | **Python Facial Recognition Service** | **🔄 Next**    |
+| 4     | Driver Management Backend             | ⬜ Not Started |
+| 5     | Driver Management Frontend            | ⬜ Not Started |
+| 6     | Facial Identification UI              | ⬜ Not Started |
+| 7     | Offence Types & Penalty Rules         | ⬜ Not Started |
+| 8     | Strike Engine & Offence Issuance      | ⬜ Not Started |
+| 9     | Offence History & Audit Logs          | ⬜ Not Started |
+| 10    | Analytics Dashboard                   | ⬜ Not Started |
+| 11    | UI Polish & Responsive Design         | ⬜ Not Started |
+| 12    | Testing & Bug Fixes                   | ⬜ Not Started |
+| 13    | Documentation & Deployment            | ⬜ Not Started |
 
 ---
 
