@@ -7,20 +7,42 @@ import Login from "./pages/Login";
 function DashboardPlaceholder() {
   const { user, logout } = useAuth();
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
-      <div className="text-center">
-        <h1 className="text-3xl font-bold text-white mb-2">
-          Welcome, {user?.full_name}
+    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center px-4 font-sans">
+      <div className="bg-white rounded-2xl shadow-md px-10 py-9 w-full max-w-sm text-center">
+        <div className="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-5">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-7 h-7 text-blue-600"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.6}
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"
+            />
+          </svg>
+        </div>
+        <h1 className="text-xl font-bold text-gray-900 mb-1">
+          Welcome back, {user?.full_name}
         </h1>
-        <p className="text-gray-400 mb-1">
-          Role: <span className="text-blue-400 font-medium">{user?.role}</span>
+        <p className="text-sm text-gray-500 mb-1">
+          Role:{" "}
+          <span className="font-semibold text-blue-600 capitalize">
+            {user?.role}
+          </span>
         </p>
-        <p className="text-gray-400 text-sm mb-6">
-          Officer ID: {user?.officer_id}
+        <p className="text-xs text-gray-400 mb-6">
+          Badge ID: {user?.officer_id}
+        </p>
+        <p className="text-xs text-gray-400 mb-6 bg-blue-50 rounded-lg px-3 py-2">
+          TOMS dashboard — coming in Phase 5
         </p>
         <button
           onClick={logout}
-          className="px-5 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white font-semibold transition"
+          className="w-full py-2.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 text-sm font-semibold border border-red-200 transition"
         >
           Logout
         </button>
@@ -31,20 +53,22 @@ function DashboardPlaceholder() {
 
 function AdminDashboardPlaceholder() {
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-      <h1 className="text-2xl font-bold text-white">
-        Admin Dashboard (Phase 5+)
-      </h1>
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center font-sans">
+      <div className="bg-white rounded-2xl shadow-md px-10 py-9 text-center">
+        <h1 className="text-xl font-bold text-gray-900">Admin Dashboard</h1>
+        <p className="text-sm text-gray-500 mt-2">Coming in Phase 5+</p>
+      </div>
     </div>
   );
 }
 
 function OfficerDashboardPlaceholder() {
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-      <h1 className="text-2xl font-bold text-white">
-        Officer Dashboard (Phase 5+)
-      </h1>
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center font-sans">
+      <div className="bg-white rounded-2xl shadow-md px-10 py-9 text-center">
+        <h1 className="text-xl font-bold text-gray-900">Officer Dashboard</h1>
+        <p className="text-sm text-gray-500 mt-2">Coming in Phase 5+</p>
+      </div>
     </div>
   );
 }
