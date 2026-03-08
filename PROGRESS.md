@@ -1,14 +1,14 @@
 # DDITS — Development Progress Tracker
 
 > **Project:** Digital Driver Identification and Traffic Offence Penalty System
-> **Last Updated:** 2026-03-09
+> **Last Updated:** 2026-03-08
 > **Developer:** Solo (Final Year University Project)
 
 ---
 
 ## Current Phase
 
-**Phase 5 — Driver Management Frontend**
+**Phase 6 — Facial Identification UI**
 
 **Status:** NOT STARTED
 
@@ -16,13 +16,12 @@
 
 ## Current Tasks
 
-- [ ] Create `frontend/src/pages/admin/DriversPage.jsx` — paginated driver list with search bar
-- [ ] Create `frontend/src/pages/admin/DriverDetailPage.jsx` — driver profile, strike history, face enrolment status
-- [ ] Create `frontend/src/components/drivers/DriverCard.jsx` — card component used in list
-- [ ] Create `frontend/src/components/drivers/CreateDriverModal.jsx` — form modal (name, license, plate, contact)
-- [ ] Create `frontend/src/components/drivers/FaceEnrollModal.jsx` — 3–5 image upload with preview, progress state
-- [ ] Wire all views to `frontend/src/services/api.js` Axios instance (auth interceptors already in place)
-- [ ] Add `/dashboard/admin/drivers` and `/dashboard/admin/drivers/:id` routes to `App.jsx`
+- [ ] Implement `identifyFace()` in `backend/services/faceService.js` (currently a stub)
+- [ ] Create `GET /api/drivers/identify` or `POST /api/identify` backend endpoint
+- [ ] Create officer-facing identify page with live camera or image upload
+- [ ] Show matched driver profile card with confidence score
+- [ ] Handle no-match case with clear UI feedback
+- [ ] Test with enrolled driver (`68144771-8505-4b50-b80d-43ba3b577322` — Chinedu Okafor)
 
 ---
 
@@ -69,6 +68,54 @@
 | `face-service/.env.example`          | Created            |
 | `.gitignore`                         | Modified           |
 | `README.md`                          | Created            |
+
+---
+
+### Phase 5 — Driver Management Frontend
+
+- [x] Created `frontend/src/components/Toast.jsx` — `ToastProvider` context + `useToast` hook; success/error/info toasts auto-dismiss after 3.5 s
+- [x] Created `frontend/src/components/LoadingSpinner.jsx` — reusable spinner with overlay mode
+- [x] Created `frontend/src/components/EmptyState.jsx` — empty-state card with icon, title, message, optional action button
+- [x] Created `frontend/src/components/ImageUploadPreview.jsx` — drag-and-drop file picker with thumbnail grid, per-image size validation, remove button
+- [x] Created `frontend/src/components/DriverSearchBar.jsx` — type dropdown (name/license/plate), `POST /api/drivers/search`, clear button
+- [x] Created `frontend/src/components/DriverEditModal.jsx` — overlay modal with pre-filled form, calls `PUT /api/drivers/:id`, license field read-only
+- [x] Created `frontend/src/components/Navigation.jsx` — responsive sidebar (desktop) + slide-in drawer (mobile) with role-based nav items and disabled "Soon" badges for future phases
+- [x] Created `frontend/src/components/DashboardLayout.jsx` — sticky top header (mobile hamburger + page title + user avatar) + `<Outlet />` for nested routes
+- [x] Created `frontend/src/pages/DriverList.jsx` — paginated driver table (20/page), skeleton loading rows, status + face enrolled badges, search integration, admin-only "Register New Driver" button
+- [x] Created `frontend/src/pages/DriverProfile.jsx` — driver info card with all details + strike counter + status, admin action buttons (Edit / Enroll Face / Delete), offence history table with date/type filters, confirm-delete modal
+- [x] Created `frontend/src/pages/admin/DriverRegistration.jsx` — two-step registration: Step 1 (driver details form with real-time validation + auto-format for license/plate) → Step 2 (face enrollment with `ImageUploadPreview`, 10–30 s processing spinner, skip option)
+- [x] Updated `frontend/src/App.jsx` — replaced all placeholder dashboard components; added `DashboardLayout` with nested routes for `/dashboard/admin/*` and `/dashboard/officer/*`; `ToastProvider` wraps full app; `DashboardHome` redirects by role
+- [x] Vite production build: ✓ 106 modules, 0 errors, 0 warnings
+- [x] Dev server starts cleanly on port 5173
+
+**Routing map:**
+
+| Path                             | Component                           | Access     |
+| -------------------------------- | ----------------------------------- | ---------- |
+| `/dashboard`                     | `DashboardHome` (redirects by role) | Any auth   |
+| `/dashboard/admin/drivers`       | `DriverList`                        | Any auth   |
+| `/dashboard/admin/drivers/new`   | `DriverRegistration`                | Admin only |
+| `/dashboard/admin/drivers/:id`   | `DriverProfile`                     | Any auth   |
+| `/dashboard/officer/drivers`     | `DriverList`                        | Any auth   |
+| `/dashboard/officer/drivers/:id` | `DriverProfile`                     | Any auth   |
+
+**Files Created / Affected — Phase 5**
+
+| File                                              | Action    |
+| ------------------------------------------------- | --------- |
+| `frontend/src/components/Toast.jsx`               | Created   |
+| `frontend/src/components/LoadingSpinner.jsx`      | Created   |
+| `frontend/src/components/EmptyState.jsx`          | Created   |
+| `frontend/src/components/ImageUploadPreview.jsx`  | Created   |
+| `frontend/src/components/DriverSearchBar.jsx`     | Created   |
+| `frontend/src/components/DriverEditModal.jsx`     | Created   |
+| `frontend/src/components/Navigation.jsx`          | Created   |
+| `frontend/src/components/DashboardLayout.jsx`     | Created   |
+| `frontend/src/pages/DriverList.jsx`               | Created   |
+| `frontend/src/pages/DriverProfile.jsx`            | Created   |
+| `frontend/src/pages/admin/DriverRegistration.jsx` | Created   |
+| `frontend/src/App.jsx`                            | Rewritten |
+| `PROGRESS.md`                                     | Updated   |
 
 ---
 
@@ -220,8 +267,8 @@
 | 2     | Authentication System             | ✅ Completed   |
 | 3     | Python Facial Recognition Service | ✅ Completed   |
 | 4     | Driver Management Backend         | ✅ Completed   |
-| **5** | **Driver Management Frontend**    | **🔄 Current** |
-| 6     | Facial Identification UI          | ⬜ Not Started |
+| 5     | Driver Management Frontend        | ✅ Completed   |
+| **6** | **Facial Identification UI**      | **🔄 Current** |
 | 7     | Offence Types & Penalty Rules     | ⬜ Not Started |
 | 8     | Strike Engine & Offence Issuance  | ⬜ Not Started |
 | 9     | Offence History & Audit Logs      | ⬜ Not Started |
