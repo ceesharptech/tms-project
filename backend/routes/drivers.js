@@ -2,7 +2,7 @@ const express = require("express");
 const multer = require("multer");
 
 const supabase = require("../services/supabase");
-const { enrollFace } = require("../services/faceService");
+const { enrollFace, identifyFace } = require("../services/faceService");
 const { authenticateToken } = require("../middleware/auth");
 const { requireRole } = require("../middleware/roleCheck");
 const {
@@ -65,6 +65,90 @@ router.get("/", requireRole(["officer", "admin"]), async (req, res) => {
     });
   }
 });
+
+// ── POST /api/drivers/identify — facial identification ──────────────────────
+// Must come BEFORE /:id to avoid route collision
+router.post(
+  "/identify",
+  requireRole(["officer", "admin"]),
+  upload.single("image"),
+  async (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({
+        error: true,
+        message: "No image file uploaded",
+        code: "NO_IMAGE",
+      });
+    }
+
+    try {
+      // Fetch all drivers that have an embedding stored
+      const { data: drivers, error: dbError } = await supabase
+        .from("drivers")
+        .select(
+          "id, full_name, license_no, plate_no, contact, status, strike_count, face_embedding",
+        )
+        .neq("status", "Deleted")
+        .not("face_embedding", "is", null);
+
+      if (dbError) throw dbError;
+
+      if (!drivers || drivers.length === 0) {
+        return res.status(404).json({
+          error: true,
+          matched: false,
+          message: "No enrolled drivers to compare against",
+          code: "NO_ENROLLED_DRIVERS",
+        });
+      }
+
+      // Build the embeddings list expected by the Python service.
+      // face_embedding is stored as { embedding: float[], model, enrolled_at, num_images }
+      // — extract only the float array.
+      const storedEmbeddings = drivers
+        .filter((d) => Array.isArray(d.face_embedding?.embedding))
+        .map((d) => ({
+          driver_id: d.id,
+          embedding: d.face_embedding.embedding,
+        }));
+
+      const result = await identifyFace(
+        req.file.buffer,
+        req.file.mimetype,
+        req.file.originalname,
+        storedEmbeddings,
+      );
+
+      if (!result.matched) {
+        return res.status(404).json({ success: true, matched: false });
+      }
+
+      // Look up the matched driver (without raw embedding)
+      const matchedDriver = drivers.find((d) => d.id === result.driver_id);
+      if (!matchedDriver) {
+        return res.status(404).json({ success: true, matched: false });
+      }
+
+      const { face_embedding: _removed, ...driverData } = matchedDriver;
+
+      return res.json({
+        success: true,
+        matched: true,
+        confidence: result.confidence,
+        distance: result.distance,
+        driver: { ...driverData, face_enrolled: true },
+      });
+    } catch (err) {
+      logError("POST /api/drivers/identify", { user: req.user.id }, err);
+      const status = err.statusCode || 500;
+      return res.status(status).json({
+        error: true,
+        message: err.message || "Identification failed",
+        code: status === 503 ? "SERVICE_UNAVAILABLE" : "IDENTIFY_ERROR",
+      });
+    }
+  },
+);
 
 // ── POST /api/drivers/search — search by name, license, or plate ─────────────
 // Must come BEFORE /:id to avoid route collision

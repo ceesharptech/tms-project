@@ -60,10 +60,68 @@ async function enrollFace(driverId, files) {
 }
 
 /**
- * identifyFace — Phase 6 stub.
+ * identifyFace — compare a query image against all stored driver embeddings.
+ *
+ * @param {Buffer}  imageBuffer    - Raw image bytes from the uploaded file.
+ * @param {string}  imageMimetype  - MIME type, e.g. "image/jpeg".
+ * @param {string}  imageFilename  - Original file name.
+ * @param {Array<{driver_id: string, embedding: number[]}>} storedEmbeddings
+ *   - All active driver embeddings fetched from the database.
+ *
+ * @returns {{ matched: boolean, driver_id?: string, confidence?: number, distance?: number }}
  */
-async function identifyFace() {
-  throw new Error("Not implemented yet");
+async function identifyFace(
+  imageBuffer,
+  imageMimetype,
+  imageFilename,
+  storedEmbeddings,
+) {
+  const form = new FormData();
+
+  form.append("image", imageBuffer, {
+    filename: imageFilename || "query.jpg",
+    contentType: imageMimetype || "image/jpeg",
+  });
+
+  form.append("stored_embeddings", JSON.stringify(storedEmbeddings));
+
+  try {
+    const response = await axios.post(`${FACE_SERVICE_URL}/identify`, form, {
+      headers: form.getHeaders(),
+      timeout: 30_000,
+    });
+    return response.data;
+  } catch (err) {
+    if (err.response) {
+      // 404 = no match found
+      if (err.response.status === 404) {
+        const detail = err.response.data?.detail;
+        if (detail && typeof detail === "object") return detail;
+        return { matched: false };
+      }
+      const detail =
+        err.response.data?.detail ||
+        err.response.data?.message ||
+        "Face service error";
+      const faceErr = new Error(
+        typeof detail === "string" ? detail : JSON.stringify(detail),
+      );
+      faceErr.statusCode = err.response.status;
+      throw faceErr;
+    }
+    if (
+      err.code === "ECONNREFUSED" ||
+      err.code === "ECONNRESET" ||
+      err.code === "ETIMEDOUT"
+    ) {
+      const netErr = new Error(
+        "Facial recognition service is not available. Please try again later.",
+      );
+      netErr.statusCode = 503;
+      throw netErr;
+    }
+    throw err;
+  }
 }
 
 /**

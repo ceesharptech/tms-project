@@ -175,7 +175,7 @@ const OFFICER_NAV = [
     label: "Identify Driver",
     path: "/dashboard/officer/identify",
     icon: <CameraIcon />,
-    disabled: true,
+    disabled: false,
   },
   {
     label: "Drivers",

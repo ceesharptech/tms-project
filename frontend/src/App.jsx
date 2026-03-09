@@ -7,6 +7,8 @@ import Login from "./pages/Login";
 import DriverList from "./pages/DriverList";
 import DriverProfile from "./pages/DriverProfile";
 import DriverRegistration from "./pages/admin/DriverRegistration";
+import OfficerDashboard from "./pages/officer/OfficerDashboard";
+import IdentifyDriver from "./pages/officer/IdentifyDriver";
 
 // ── Root redirect: /  →  /login  or  /dashboard ────────────────────────────
 function RootRedirect() {
@@ -24,7 +26,7 @@ function DashboardHome() {
       to={
         user.role === "admin"
           ? "/dashboard/admin/drivers"
-          : "/dashboard/officer/drivers"
+          : "/dashboard/officer"
       }
       replace
     />
@@ -70,10 +72,8 @@ export default function App() {
               <Route path="admin/drivers/:id" element={<DriverProfile />} />
 
               {/* Officer routes */}
-              <Route
-                path="officer"
-                element={<Navigate to="drivers" replace />}
-              />
+              <Route path="officer" element={<OfficerDashboard />} />
+              <Route path="officer/identify" element={<IdentifyDriver />} />
               <Route path="officer/drivers" element={<DriverList />} />
               <Route path="officer/drivers/:id" element={<DriverProfile />} />
             </Route>
