@@ -33,6 +33,11 @@ export default function DriverEditModal({ driver, isOpen, onClose, onSave }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
+  // Profile picture state
+  const [newPic, setNewPic] = useState(null); // File object
+  const [newPicPreview, setNewPicPreview] = useState(""); // data URL
+  const [picError, setPicError] = useState("");
+
   // Pre-fill form whenever driver prop changes
   useEffect(() => {
     if (driver) {
@@ -43,6 +48,9 @@ export default function DriverEditModal({ driver, isOpen, onClose, onSave }) {
         status: driver.status ?? "Active",
       });
       setError("");
+      setNewPic(null);
+      setNewPicPreview("");
+      setPicError("");
     }
   }, [driver]);
 
@@ -52,21 +60,61 @@ export default function DriverEditModal({ driver, isOpen, onClose, onSave }) {
     return (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
   }
 
+  function handlePicChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPicError("");
+    if (!["image/jpeg", "image/jpg", "image/png"].includes(file.type)) {
+      setPicError("Only JPG and PNG files are allowed.");
+      e.target.value = "";
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setPicError("File size must be less than 2MB.");
+      e.target.value = "";
+      return;
+    }
+    setNewPic(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setNewPicPreview(ev.target.result);
+    reader.readAsDataURL(file);
+  }
+
+  function handlePicRemove() {
+    setNewPic(null);
+    setNewPicPreview("");
+    setPicError("");
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     setSaving(true);
     setError("");
 
-    const payload = {
-      full_name: form.full_name.trim(),
-      status: form.status,
-    };
-    if (form.plate_no.trim())
-      payload.plate_no = form.plate_no.trim().toUpperCase();
-    if (form.contact.trim()) payload.contact = form.contact.trim();
-
     try {
-      await api.put(`/drivers/${driver.id}`, payload);
+      if (newPic) {
+        // Send as multipart/form-data when a new picture is included
+        const formData = new FormData();
+        formData.append("full_name", form.full_name.trim());
+        formData.append("status", form.status);
+        if (form.plate_no.trim())
+          formData.append("plate_no", form.plate_no.trim().toUpperCase());
+        if (form.contact.trim())
+          formData.append("contact", form.contact.trim());
+        formData.append("profile_picture", newPic);
+        await api.put(`/drivers/${driver.id}`, formData);
+      } else {
+        // No file change — send as JSON (original behavior)
+        const payload = {
+          full_name: form.full_name.trim(),
+          status: form.status,
+        };
+        if (form.plate_no.trim())
+          payload.plate_no = form.plate_no.trim().toUpperCase();
+        if (form.contact.trim()) payload.contact = form.contact.trim();
+        await api.put(`/drivers/${driver.id}`, payload);
+      }
+
       toast("Driver updated successfully", "success");
       onSave();
       onClose();
@@ -197,6 +245,77 @@ export default function DriverEditModal({ driver, isOpen, onClose, onSave }) {
                 </option>
               ))}
             </select>
+          </div>
+
+          {/* Profile picture */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
+              Profile Picture
+            </label>
+
+            {/* Show current picture or a placeholder */}
+            {(newPicPreview || driver.profile_picture_url) && (
+              <div className="flex items-start gap-3 mb-2">
+                <img
+                  src={newPicPreview || driver.profile_picture_url}
+                  alt="Profile"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
+                  className="w-16 h-16 object-cover rounded-xl border border-gray-200 shrink-0"
+                />
+                <div className="text-xs text-gray-500 mt-1">
+                  {newPic ? (
+                    <>
+                      <span className="font-medium text-gray-700">
+                        {newPic.name}
+                      </span>
+                      <br />
+                      <button
+                        type="button"
+                        onClick={handlePicRemove}
+                        className="text-red-500 hover:text-red-700 mt-1"
+                      >
+                        Remove new photo
+                      </button>
+                    </>
+                  ) : (
+                    <span className="text-gray-400">Current photo</span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <label className="flex items-center gap-2 px-3 py-2 border border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-blue-400 hover:bg-blue-50/40 transition text-sm text-gray-500">
+              <svg
+                className="w-4 h-4 text-gray-400 shrink-0"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
+                />
+              </svg>
+              {driver.profile_picture_url ? "Change photo…" : "Upload photo…"}
+              <input
+                type="file"
+                accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                onChange={handlePicChange}
+                className="sr-only"
+              />
+            </label>
+
+            {picError && (
+              <p className="text-xs text-red-500 mt-1">{picError}</p>
+            )}
+            <p className="text-xs text-gray-400 mt-1">
+              Max 2 MB · JPG or PNG only
+            </p>
           </div>
 
           {/* Actions */}

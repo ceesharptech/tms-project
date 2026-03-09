@@ -1,27 +1,22 @@
 # DDITS — Development Progress Tracker
 
 > **Project:** Digital Driver Identification and Traffic Offence Penalty System
-> **Last Updated:** 2026-03-08
+> **Last Updated:** 2026-03-09
 > **Developer:** Solo (Final Year University Project)
 
 ---
 
 ## Current Phase
 
-**Phase 6 — Facial Identification UI**
+**Mini Task — Driver Profile Picture Feature**
 
-**Status:** NOT STARTED
+**Status:** COMPLETE ✅
 
 ---
 
 ## Current Tasks
 
-- [ ] Implement `identifyFace()` in `backend/services/faceService.js` (currently a stub)
-- [ ] Create `GET /api/drivers/identify` or `POST /api/identify` backend endpoint
-- [ ] Create officer-facing identify page with live camera or image upload
-- [ ] Show matched driver profile card with confidence score
-- [ ] Handle no-match case with clear UI feedback
-- [ ] Test with enrolled driver (`68144771-8505-4b50-b80d-43ba3b577322` — Chinedu Okafor)
+All tasks complete. See completed section below.
 
 ---
 
@@ -68,6 +63,75 @@
 | `face-service/.env.example`          | Created            |
 | `.gitignore`                         | Modified           |
 | `README.md`                          | Created            |
+
+---
+
+### Mini Task — Driver Profile Picture Feature
+
+- [x] Applied Supabase migration `003_add_profile_picture_url_to_drivers.sql` — added `profile_picture_url TEXT NULL DEFAULT NULL` to `drivers` table (executed via MCP server)
+- [x] Added `SUPABASE_STORAGE_BUCKET=driver-profiles` to `backend/.env`; added placeholder to `backend/.env.example`
+- [x] Created `backend/services/storageService.js` — `uploadProfilePicture(driverId, buffer, mimetype)` generates unique filename (`profile_{id}_{ts}.ext`), uploads to bucket, returns `getPublicUrl()` result; `deleteProfilePicture(publicUrl)` extracts path from URL and removes silently (non-fatal)
+- [x] Updated `POST /api/drivers` — added `uploadProfilePic.single("profile_picture")` multer middleware (max 2 MB, JPG/PNG only, inline error handling for `LIMIT_FILE_SIZE` / `INVALID_FILE_TYPE`); uploads picture post-insert, saves URL; non-fatal if upload fails (driver still created)
+- [x] Updated `PUT /api/drivers/:id` — same multer middleware; supports text-only, picture-only, or combined updates; deletes old picture from storage before uploading new one
+- [x] Updated `POST /api/drivers/identify` — matched driver query now includes `profile_picture_url` so the identification result carries the URL
+- [x] Updated `frontend/src/pages/admin/DriverRegistration.jsx` — added profile picture state, client-side 2 MB + type validation, thumbnail preview with remove button, dashed-border file picker; form submission switched from JSON to `FormData`
+- [x] Updated `frontend/src/components/DriverEditModal.jsx` — shows current picture, dashed upload button, new preview before save; submits as `FormData` when file selected, plain JSON otherwise
+- [x] Updated `frontend/src/components/IdentificationResult.jsx` — match card shows 96×96 px profile image left of driver name; `onError` fallback to user-icon placeholder with "No photo" text
+- [x] Updated `frontend/src/pages/DriverProfile.jsx` — Section 1 shows 128×128 px profile picture prominently left of driver details; `onError` fallback placeholder; admin "Update Photo" link below picture opens edit modal
+- [x] Updated `frontend/src/pages/DriverList.jsx` — new `DriverAvatar` component (36×36 px circular picture or coloured initials, hue from driver UUID); first avatar column added to table
+- [x] Frontend production build: ✓ 112 modules, 0 errors, 0 warnings
+
+**Supabase Storage API methods used:**
+
+- `supabase.storage.from(bucket).upload(filename, buffer, { contentType, upsert: false })`
+- `supabase.storage.from(bucket).getPublicUrl(filename)` → `data.publicUrl` (permanent, no expiry)
+- `supabase.storage.from(bucket).remove([filename])`
+
+**Files Created / Affected — Mini Task**
+
+| File                                                             | Action                                     |
+| ---------------------------------------------------------------- | ------------------------------------------ |
+| `supabase/migrations/003_add_profile_picture_url_to_drivers.sql` | Created                                    |
+| `backend/.env`                                                   | Modified (added `SUPABASE_STORAGE_BUCKET`) |
+| `backend/.env.example`                                           | Modified (added placeholder)               |
+| `backend/services/storageService.js`                             | Created                                    |
+| `backend/routes/drivers.js`                                      | Modified (POST, PUT, identify)             |
+| `frontend/src/pages/admin/DriverRegistration.jsx`                | Modified                                   |
+| `frontend/src/components/DriverEditModal.jsx`                    | Modified                                   |
+| `frontend/src/components/IdentificationResult.jsx`               | Modified                                   |
+| `frontend/src/pages/DriverProfile.jsx`                           | Modified                                   |
+| `frontend/src/pages/DriverList.jsx`                              | Modified                                   |
+| `PROGRESS.md`                                                    | Updated                                    |
+
+---
+
+### Phase 6 — Facial Identification UI
+
+- [x] Created `frontend/src/pages/officer/OfficerDashboard.jsx` — officer landing page with quick-action cards (Identify Driver, View Drivers, Issue Offence)
+- [x] Created `frontend/src/components/FaceCapture.jsx` — live webcam capture via `getUserMedia` + still-image fallback upload
+- [x] Created `frontend/src/components/FacePhotoGuidelines.jsx` — photo capture tips checklist shown before scanning
+- [x] Created `frontend/src/pages/officer/IdentifyDriver.jsx` — full identification flow: guidelines → capture → loading → result
+- [x] Created `frontend/src/components/IdentificationResult.jsx` — match / no-match / error result card with driver details + confidence score
+- [x] Created `frontend/src/services/faceRecognitionService.js` — `identifyDriver(imageBlob)` via `POST /api/drivers/identify` (multipart)
+- [x] Updated `frontend/src/components/Navigation.jsx` — added "Identify Driver" nav item for officer role
+- [x] Updated `frontend/src/App.jsx` — added `/dashboard/officer/identify` route
+- [x] **Bug Fix**: `face-service/models/face_identification.py` — fixed `TypeError: float() argument must be a string or a real number, not 'dict'`; stored embeddings are nested `{"data": [...512 floats...]}` dict — added extraction of flat array before cosine distance computation
+- [x] End-to-end identification flow confirmed working with enrolled driver Chinedu Okafor
+
+**Files Created / Affected — Phase 6**
+
+| File                                               | Action                            |
+| -------------------------------------------------- | --------------------------------- |
+| `frontend/src/pages/officer/OfficerDashboard.jsx`  | Created                           |
+| `frontend/src/pages/officer/IdentifyDriver.jsx`    | Created                           |
+| `frontend/src/components/FaceCapture.jsx`          | Created                           |
+| `frontend/src/components/FacePhotoGuidelines.jsx`  | Created                           |
+| `frontend/src/components/IdentificationResult.jsx` | Created                           |
+| `frontend/src/services/faceRecognitionService.js`  | Created                           |
+| `frontend/src/components/Navigation.jsx`           | Modified (officer nav item)       |
+| `frontend/src/App.jsx`                             | Modified (officer/identify route) |
+| `face-service/models/face_identification.py`       | Modified (embedding bug fix)      |
+| `PROGRESS.md`                                      | Updated                           |
 
 ---
 
@@ -260,22 +324,23 @@
 
 ## Upcoming Phases
 
-| Phase | Name                              | Status         |
-| ----- | --------------------------------- | -------------- |
-| 0     | Project Scaffolding               | ✅ Completed   |
-| 1     | Database Schema & Supabase Setup  | ✅ Completed   |
-| 2     | Authentication System             | ✅ Completed   |
-| 3     | Python Facial Recognition Service | ✅ Completed   |
-| 4     | Driver Management Backend         | ✅ Completed   |
-| 5     | Driver Management Frontend        | ✅ Completed   |
-| **6** | **Facial Identification UI**      | **🔄 Current** |
-| 7     | Offence Types & Penalty Rules     | ⬜ Not Started |
-| 8     | Strike Engine & Offence Issuance  | ⬜ Not Started |
-| 9     | Offence History & Audit Logs      | ⬜ Not Started |
-| 10    | Analytics Dashboard               | ⬜ Not Started |
-| 11    | UI Polish & Responsive Design     | ⬜ Not Started |
-| 12    | Testing & Bug Fixes               | ⬜ Not Started |
-| 13    | Documentation & Deployment        | ⬜ Not Started |
+| Phase | Name                                | Status         |
+| ----- | ----------------------------------- | -------------- |
+| 0     | Project Scaffolding                 | ✅ Completed   |
+| 1     | Database Schema & Supabase Setup    | ✅ Completed   |
+| 2     | Authentication System               | ✅ Completed   |
+| 3     | Python Facial Recognition Service   | ✅ Completed   |
+| 4     | Driver Management Backend           | ✅ Completed   |
+| 5     | Driver Management Frontend          | ✅ Completed   |
+| 6     | Facial Identification UI            | ✅ Completed   |
+| MT    | Mini Task — Driver Profile Pictures | ✅ Completed   |
+| 7     | Offence Types & Penalty Rules       | ⬜ Not Started |
+| 8     | Strike Engine & Offence Issuance    | ⬜ Not Started |
+| 9     | Offence History & Audit Logs        | ⬜ Not Started |
+| 10    | Analytics Dashboard                 | ⬜ Not Started |
+| 11    | UI Polish & Responsive Design       | ⬜ Not Started |
+| 12    | Testing & Bug Fixes                 | ⬜ Not Started |
+| 13    | Documentation & Deployment          | ⬜ Not Started |
 
 ---
 

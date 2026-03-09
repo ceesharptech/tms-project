@@ -3,6 +3,10 @@ const multer = require("multer");
 
 const supabase = require("../services/supabase");
 const { enrollFace, identifyFace } = require("../services/faceService");
+const {
+  uploadProfilePicture,
+  deleteProfilePicture,
+} = require("../services/storageService");
 const { authenticateToken } = require("../middleware/auth");
 const { requireRole } = require("../middleware/roleCheck");
 const {
@@ -12,13 +16,31 @@ const {
 
 const router = express.Router();
 
-// Files held in memory (buffers forwarded directly to Python service)
+// Multer: face enrollment images (up to 5, 10 MB each)
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB per image
   fileFilter: (_req, file, cb) => {
     if (!file.mimetype.startsWith("image/")) {
       return cb(new Error(`File ${file.originalname} is not an image`));
+    }
+    cb(null, true);
+  },
+});
+
+// Multer: profile picture (single file, 2 MB, JPG/PNG only)
+const PROFILE_PIC_MAX = 2 * 1024 * 1024; // 2 MB
+const PROFILE_PIC_TYPES = ["image/jpeg", "image/jpg", "image/png"];
+const uploadProfilePic = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: PROFILE_PIC_MAX },
+  fileFilter: (_req, file, cb) => {
+    if (!PROFILE_PIC_TYPES.includes(file.mimetype)) {
+      return cb(
+        Object.assign(new Error("Only JPG and PNG files are allowed"), {
+          code: "INVALID_FILE_TYPE",
+        }),
+      );
     }
     cb(null, true);
   },
@@ -129,14 +151,24 @@ router.post(
         return res.status(404).json({ success: true, matched: false });
       }
 
-      const { face_embedding: _removed, ...driverData } = matchedDriver;
+      // Fetch full driver record to include profile_picture_url
+      const { data: fullDriver } = await supabase
+        .from("drivers")
+        .select(
+          "id, full_name, license_no, plate_no, contact, status, strike_count, profile_picture_url",
+        )
+        .eq("id", matchedDriver.id)
+        .single();
+
+      const driverData = fullDriver || matchedDriver;
+      const { face_embedding: _removed, ...safeDriverData } = driverData;
 
       return res.json({
         success: true,
         matched: true,
         confidence: result.confidence,
         distance: result.distance,
-        driver: { ...driverData, face_enrolled: true },
+        driver: { ...safeDriverData, face_enrolled: true },
       });
     } catch (err) {
       logError("POST /api/drivers/identify", { user: req.user.id }, err);
@@ -245,9 +277,32 @@ router.get("/:id", requireRole(["officer", "admin"]), async (req, res) => {
 router.post(
   "/",
   requireRole(["admin"]),
+  (req, res, next) => {
+    uploadProfilePic.single("profile_picture")(req, res, (err) => {
+      if (err) {
+        if (err.code === "LIMIT_FILE_SIZE") {
+          return res.status(400).json({
+            error: true,
+            message: "Profile picture must be less than 2MB",
+            code: "FILE_TOO_LARGE",
+          });
+        }
+        if (err.code === "INVALID_FILE_TYPE") {
+          return res.status(400).json({
+            error: true,
+            message: "Only JPG and PNG files are allowed for profile picture",
+            code: "INVALID_FILE_TYPE",
+          });
+        }
+        return next(err);
+      }
+      next();
+    });
+  },
   validateDriverCreate,
   async (req, res) => {
     try {
+      console.log(req.body);
       const { full_name, license_no, plate_no, contact } = req.body;
 
       const { data: driver, error } = await supabase
@@ -265,7 +320,6 @@ router.post(
 
       if (error) {
         if (error.code === "23505") {
-          // Unique constraint violation
           return res.status(409).json({
             error: true,
             message: "A driver with that license number already exists",
@@ -273,6 +327,31 @@ router.post(
           });
         }
         throw error;
+      }
+
+      // Upload profile picture if provided
+      if (req.file) {
+        try {
+          const publicUrl = await uploadProfilePicture(
+            driver.id,
+            req.file.buffer,
+            req.file.mimetype,
+          );
+          const { data: updated } = await supabase
+            .from("drivers")
+            .update({ profile_picture_url: publicUrl })
+            .eq("id", driver.id)
+            .select()
+            .single();
+          driver.profile_picture_url =
+            updated?.profile_picture_url ?? publicUrl;
+        } catch (uploadErr) {
+          console.error(
+            `[POST /api/drivers] Profile picture upload failed for ${driver.id}:`,
+            uploadErr.message,
+          );
+          // Non-fatal: driver was created, picture just didn't upload
+        }
       }
 
       console.log(
@@ -295,6 +374,28 @@ router.post(
 router.put(
   "/:id",
   requireRole(["admin"]),
+  (req, res, next) => {
+    uploadProfilePic.single("profile_picture")(req, res, (err) => {
+      if (err) {
+        if (err.code === "LIMIT_FILE_SIZE") {
+          return res.status(400).json({
+            error: true,
+            message: "Profile picture must be less than 2MB",
+            code: "FILE_TOO_LARGE",
+          });
+        }
+        if (err.code === "INVALID_FILE_TYPE") {
+          return res.status(400).json({
+            error: true,
+            message: "Only JPG and PNG files are allowed for profile picture",
+            code: "INVALID_FILE_TYPE",
+          });
+        }
+        return next(err);
+      }
+      next();
+    });
+  },
   validateDriverUpdate,
   async (req, res) => {
     try {
@@ -319,7 +420,11 @@ router.put(
         updates.status = status;
       }
 
-      if (Object.keys(updates).length === 0) {
+      // Allow update requests that only contain a profile picture with no text fields
+      const hasTextUpdates = Object.keys(updates).length > 0;
+      const hasFileUpdate = !!req.file;
+
+      if (!hasTextUpdates && !hasFileUpdate) {
         return res.status(400).json({
           error: true,
           message: "No updatable fields provided",
@@ -327,29 +432,89 @@ router.put(
         });
       }
 
-      updates.updated_at = new Date().toISOString();
+      let driver;
 
-      const { data: driver, error } = await supabase
-        .from("drivers")
-        .update(updates)
-        .eq("id", id)
-        .neq("status", "Deleted")
-        .select()
-        .single();
+      if (hasTextUpdates) {
+        updates.updated_at = new Date().toISOString();
 
-      if (error || !driver) {
-        if (error?.code === "23505") {
-          return res.status(409).json({
+        const { data, error } = await supabase
+          .from("drivers")
+          .update(updates)
+          .eq("id", id)
+          .neq("status", "Deleted")
+          .select()
+          .single();
+
+        if (error || !data) {
+          if (error?.code === "23505") {
+            return res.status(409).json({
+              error: true,
+              message: "A driver with that license number already exists",
+              code: "DUPLICATE_LICENSE",
+            });
+          }
+          return res.status(404).json({
             error: true,
-            message: "A driver with that license number already exists",
-            code: "DUPLICATE_LICENSE",
+            message: "Driver not found",
+            code: "NOT_FOUND",
           });
         }
-        return res.status(404).json({
-          error: true,
-          message: "Driver not found",
-          code: "NOT_FOUND",
-        });
+        driver = data;
+      } else {
+        // Only a profile picture update — fetch the current driver record
+        const { data, error } = await supabase
+          .from("drivers")
+          .select("*")
+          .eq("id", id)
+          .neq("status", "Deleted")
+          .single();
+
+        if (error || !data) {
+          return res.status(404).json({
+            error: true,
+            message: "Driver not found",
+            code: "NOT_FOUND",
+          });
+        }
+        driver = data;
+      }
+
+      // Handle profile picture upload/update
+      if (hasFileUpdate) {
+        try {
+          // Delete old picture from storage if it exists
+          if (driver.profile_picture_url) {
+            await deleteProfilePicture(driver.profile_picture_url);
+          }
+
+          const publicUrl = await uploadProfilePicture(
+            id,
+            req.file.buffer,
+            req.file.mimetype,
+          );
+
+          const { data: updated } = await supabase
+            .from("drivers")
+            .update({
+              profile_picture_url: publicUrl,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", id)
+            .select()
+            .single();
+
+          if (updated) driver = updated;
+        } catch (uploadErr) {
+          console.error(
+            `[PUT /api/drivers/:id] Profile picture update failed for ${id}:`,
+            uploadErr.message,
+          );
+          return res.status(500).json({
+            error: true,
+            message: "Failed to update profile picture",
+            code: "STORAGE_ERROR",
+          });
+        }
       }
 
       return res.json({ success: true, data: driver });

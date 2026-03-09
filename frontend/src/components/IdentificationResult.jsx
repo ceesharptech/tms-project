@@ -85,15 +85,55 @@ function MatchCard({ result, onViewProfile, onIssueOffence, onReset }) {
 
       {/* Driver summary card */}
       <div className="bg-white border border-gray-200 rounded-2xl p-5 space-y-3 shadow-sm">
-        <div className="flex items-start justify-between gap-2 flex-wrap">
-          <h2 className="text-xl font-bold text-gray-900">
-            {driver.full_name}
-          </h2>
-          <span
-            className={`text-xs font-semibold px-2.5 py-1 rounded-full ${statusCls}`}
+        {/* Profile picture + name row */}
+        <div className="flex items-start gap-4">
+          {/* Profile picture (96×96) */}
+          {driver.profile_picture_url ? (
+            <img
+              src={driver.profile_picture_url}
+              alt={driver.full_name}
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+                e.currentTarget.nextElementSibling.style.display = "flex";
+              }}
+              className="w-24 h-24 object-cover rounded-xl border border-gray-200 shrink-0"
+            />
+          ) : null}
+          {/* Fallback placeholder (shown when no URL or image fails to load) */}
+          <div
+            className="w-24 h-24 rounded-xl border border-gray-200 bg-gray-100 flex-col items-center justify-center text-gray-400 shrink-0"
+            style={{ display: driver.profile_picture_url ? "none" : "flex" }}
           >
-            {driver.status}
-          </span>
+            <svg
+              className="w-8 h-8 mb-1"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.3}
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
+              />
+            </svg>
+            <span className="text-xs text-center leading-tight">No photo</span>
+          </div>
+
+          {/* Name + status */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-2 flex-wrap">
+              <h2 className="text-xl font-bold text-gray-900">
+                {driver.full_name}
+              </h2>
+              <span
+                className={`text-xs font-semibold px-2.5 py-1 rounded-full ${statusCls}`}
+              >
+                {driver.status}
+              </span>
+            </div>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">

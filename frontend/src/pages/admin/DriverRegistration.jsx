@@ -117,6 +117,11 @@ export default function DriverRegistration() {
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState("");
 
+  // Profile picture state
+  const [profilePic, setProfilePic] = useState(null); // File object
+  const [profilePicPreview, setProfilePicPreview] = useState(""); // data URL
+  const [profilePicError, setProfilePicError] = useState("");
+
   // Step 2 state
   const [images, setImages] = useState([]);
   const [enrolling, setEnrolling] = useState(false);
@@ -141,6 +146,34 @@ export default function DriverRegistration() {
     setForm((f) => ({ ...f, license_no: value }));
   }
 
+  function handleProfilePicChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setProfilePicError("");
+
+    if (!["image/jpeg", "image/jpg", "image/png"].includes(file.type)) {
+      setProfilePicError("Only JPG and PNG files are allowed.");
+      e.target.value = "";
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setProfilePicError("File size must be less than 2MB.");
+      e.target.value = "";
+      return;
+    }
+
+    setProfilePic(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setProfilePicPreview(ev.target.result);
+    reader.readAsDataURL(file);
+  }
+
+  function handleProfilePicRemove() {
+    setProfilePic(null);
+    setProfilePicPreview("");
+    setProfilePicError("");
+  }
+
   // ── Step 1: Submit driver details ──────────────────────────────────────────
 
   async function handleStep1Submit(e) {
@@ -154,15 +187,16 @@ export default function DriverRegistration() {
     setServerError("");
     setSubmitting(true);
 
-    const payload = {
-      full_name: form.full_name.trim(),
-      license_no: form.license_no,
-    };
-    if (form.plate_no.trim()) payload.plate_no = form.plate_no.trim();
-    if (form.contact.trim()) payload.contact = form.contact.trim();
+    // Use FormData so we can optionally attach a profile picture
+    const formData = new FormData();
+    formData.append("full_name", form.full_name.trim());
+    formData.append("license_no", form.license_no);
+    if (form.plate_no.trim()) formData.append("plate_no", form.plate_no.trim());
+    if (form.contact.trim()) formData.append("contact", form.contact.trim());
+    if (profilePic) formData.append("profile_picture", profilePic);
 
     try {
-      const res = await api.post("/drivers", payload);
+      const res = await api.post("/drivers", formData);
       const { id } = res.data.data;
       setCreatedDriverId(id);
       toast("Driver registered successfully", "success");
@@ -336,6 +370,73 @@ export default function DriverRegistration() {
                 placeholder="Phone number or email address"
                 className={inputCls("contact")}
               />
+            </div>
+
+            {/* Profile picture */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+                Profile Picture{" "}
+                <span className="text-gray-400 font-normal">(optional)</span>
+              </label>
+              <p className="text-xs text-gray-400 mb-2">
+                For visual identification confirmation only. Separate from
+                facial recognition data. Max 2 MB, JPG or PNG.
+              </p>
+
+              {profilePicPreview ? (
+                <div className="flex items-start gap-3">
+                  <img
+                    src={profilePicPreview}
+                    alt="Profile preview"
+                    className="w-24 h-24 object-cover rounded-xl border border-gray-200 shrink-0"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-gray-700 truncate">
+                      {profilePic?.name}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {profilePic
+                        ? (profilePic.size / 1024).toFixed(1) + " KB"
+                        : ""}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleProfilePicRemove}
+                      className="mt-2 text-xs text-red-500 hover:text-red-700 font-medium transition"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <label className="flex items-center gap-2 px-3 py-2.5 border border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-blue-400 hover:bg-blue-50/40 transition">
+                  <svg
+                    className="w-5 h-5 text-gray-400 shrink-0"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M13.5 3.75h7.5M17.25 3.75v7.5m-13.5 9h15a2.25 2.25 0 002.25-2.25v-15A2.25 2.25 0 0018.75.75h-15A2.25 2.25 0 001.5 3.75v15A2.25 2.25 0 003.75 21z"
+                    />
+                  </svg>
+                  <span className="text-sm text-gray-500">Choose photo…</span>
+                  <input
+                    type="file"
+                    accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                    onChange={handleProfilePicChange}
+                    className="sr-only"
+                  />
+                </label>
+              )}
+
+              {profilePicError && (
+                <p className="text-xs text-red-500 mt-1">{profilePicError}</p>
+              )}
             </div>
 
             {/* Actions */}

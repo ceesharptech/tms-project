@@ -70,12 +70,52 @@ function FaceEnrolledBadge({ enrolled }) {
 function SkeletonRow() {
   return (
     <tr className="animate-pulse">
-      {[...Array(7)].map((_, i) => (
+      {[...Array(8)].map((_, i) => (
         <td key={i} className="px-4 py-3">
           <div className="h-4 bg-gray-200 rounded w-3/4" />
         </td>
       ))}
     </tr>
+  );
+}
+
+// Avatar with profile picture or initials fallback
+function DriverAvatar({ driver }) {
+  const initials = driver.full_name
+    ? driver.full_name
+        .split(" ")
+        .slice(0, 2)
+        .map((w) => w[0])
+        .join("")
+        .toUpperCase()
+    : "?";
+
+  // Deterministic hue from driver id
+  const hue = driver.id
+    ? parseInt(driver.id.replace(/-/g, "").slice(0, 6), 16) % 360
+    : 210;
+
+  if (driver.profile_picture_url) {
+    return (
+      <img
+        src={driver.profile_picture_url}
+        alt={driver.full_name}
+        onError={(e) => {
+          e.currentTarget.style.display = "none";
+          e.currentTarget.nextElementSibling.style.display = "flex";
+        }}
+        className="w-9 h-9 rounded-full object-cover border border-gray-200 shrink-0"
+      />
+    );
+  }
+
+  return (
+    <div
+      className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+      style={{ backgroundColor: `hsl(${hue}, 55%, 50%)` }}
+    >
+      {initials}
+    </div>
   );
 }
 
@@ -240,6 +280,10 @@ export default function DriverList() {
                     key={driver.id}
                     className="hover:bg-gray-50/70 transition"
                   >
+                    {/* Avatar */}
+                    <td className="px-4 py-3">
+                      <DriverAvatar driver={driver} />
+                    </td>
                     {/* Name */}
                     <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap">
                       {driver.full_name}
@@ -317,6 +361,7 @@ function TableHead() {
   return (
     <thead>
       <tr className="border-b border-gray-100 bg-gray-50/80">
+        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide w-12" />
         <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
           Full Name
         </th>

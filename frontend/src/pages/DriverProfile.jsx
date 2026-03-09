@@ -266,50 +266,100 @@ export default function DriverProfile() {
       <div className="space-y-5">
         {/* ── Section 1: Driver info card ── */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-          {/* Top row: name + status */}
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-5">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 mb-1">
-                {driver.full_name}
-              </h1>
-              <div className="flex flex-wrap items-center gap-2">
-                <StatusBadge status={driver.status} large />
-                {driver.face_enrolled ? (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-semibold">
-                    <svg
-                      className="w-3.5 h-3.5"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth={2}
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M4.5 12.75l6 6 9-13.5"
-                      />
-                    </svg>
-                    Face Enrolled
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-100 border border-gray-200 text-gray-500 text-xs font-semibold">
-                    No Face Data
-                  </span>
-                )}
+          {/* Top row: picture + name/status/strikes */}
+          <div className="flex flex-col sm:flex-row gap-5 mb-5">
+            {/* Profile picture (128×128) */}
+            <div className="shrink-0 flex flex-col items-center gap-2">
+              {driver.profile_picture_url ? (
+                <img
+                  src={driver.profile_picture_url}
+                  alt={driver.full_name}
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                    e.currentTarget.nextElementSibling.style.display = "flex";
+                  }}
+                  className="w-32 h-32 object-cover rounded-2xl border border-gray-200"
+                />
+              ) : null}
+              {/* Placeholder */}
+              <div
+                className="w-32 h-32 rounded-2xl border border-gray-200 bg-gray-100 flex-col items-center justify-center text-gray-400"
+                style={{
+                  display: driver.profile_picture_url ? "none" : "flex",
+                }}
+              >
+                <svg
+                  className="w-10 h-10 mb-1"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.2}
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
+                  />
+                </svg>
+                <span className="text-xs text-center">No photo</span>
               </div>
+
+              {isAdmin && (
+                <button
+                  onClick={() => setEditOpen(true)}
+                  className="text-xs text-blue-600 hover:text-blue-800 font-medium transition"
+                >
+                  Update Photo
+                </button>
+              )}
             </div>
 
-            {/* Strike counter */}
-            <div className="text-center bg-gray-50 rounded-xl px-5 py-3 border border-gray-100 shrink-0">
-              <p
-                className={`text-3xl font-bold ${driver.strike_count > 0 ? "text-red-600" : "text-gray-300"}`}
-              >
-                {driver.strike_count ?? 0}
-              </p>
-              <p className="text-xs text-gray-400 font-medium mt-0.5">
-                Strike{(driver.strike_count ?? 0) !== 1 ? "s" : ""}
-              </p>
+            {/* Name + status + strikes */}
+            <div className="flex-1 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900 mb-1">
+                  {driver.full_name}
+                </h1>
+                <div className="flex flex-wrap items-center gap-2">
+                  <StatusBadge status={driver.status} large />
+                  {driver.face_enrolled ? (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-semibold">
+                      <svg
+                        className="w-3.5 h-3.5"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={2}
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M4.5 12.75l6 6 9-13.5"
+                        />
+                      </svg>
+                      Face Enrolled
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-100 border border-gray-200 text-gray-500 text-xs font-semibold">
+                      No Face Data
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Strike counter */}
+              <div className="text-center bg-gray-50 rounded-xl px-5 py-3 border border-gray-100 shrink-0">
+                <p
+                  className={`text-3xl font-bold ${driver.strike_count > 0 ? "text-red-600" : "text-gray-300"}`}
+                >
+                  {driver.strike_count ?? 0}
+                </p>
+                <p className="text-xs text-gray-400 font-medium mt-0.5">
+                  Strike{(driver.strike_count ?? 0) !== 1 ? "s" : ""}
+                </p>
+              </div>
             </div>
           </div>
 
