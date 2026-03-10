@@ -1,14 +1,14 @@
 # DDITS — Development Progress Tracker
 
 > **Project:** Digital Driver Identification and Traffic Offence Penalty System
-> **Last Updated:** 2026-03-09
+> **Last Updated:** 2026-03-10
 > **Developer:** Solo (Final Year University Project)
 
 ---
 
 ## Current Phase
 
-**Mini Task — Driver Profile Picture Feature**
+**Phase 8 — Strike Engine & Offence Issuance Workflow**
 
 **Status:** COMPLETE ✅
 
@@ -27,6 +27,121 @@ All tasks complete. See completed section below.
 ---
 
 ## Completed
+
+### Phase 8 — Strike Engine & Offence Issuance Workflow
+
+**Database (Supabase RPC / Stored Procedure)**
+
+- [x] Created `supabase/migrations/004_issue_offence_rpc.sql` — `issue_offence_transaction(p_driver_id, p_officer_id, p_offence_type_id, p_notes)` PostgreSQL function; all 8 steps execute atomically: lock-fetch driver, fetch & validate offence type (must be active), calculate new strike count, find matching penalty rule (`BETWEEN min_strikes AND max_strikes`), calculate final fine (`base_fine × multiplier`), insert offence record, update driver (`strike_count`, `status`, `updated_at`), insert audit log (`OFFENCE_ISSUED`) — if ANY step fails the entire transaction rolls back via `RAISE`; returns complete JSONB result with `offence`, `driver`, `calculation` keys
+- [x] Applied migration via MCP server — function confirmed live (`pronargs=4`)
+
+**Backend**
+
+- [x] Created `backend/routes/offences.js`:
+  - `POST /api/offences/calculate-penalty` (officer + admin) — preview penalty without saving: fetches driver strike count + offence type details, queries penalty rules, returns `base_fine`, `multiplier`, `final_fine`, `current_strikes`, `strike_delta`, `new_strikes`, `current_status`, `new_status`, `tier_changed`
+  - `POST /api/offences/issue` (officer + admin) — calls `issue_offence_transaction()` RPC; `officer_id` taken from JWT (never client); structured error mapping for `DRIVER_NOT_FOUND`, `OFFENCE_TYPE_INACTIVE`, `NO_PENALTY_RULE`, `TRANSACTION_FAILED`; UUID format validation; notes max 500 chars; returns 201 with full receipt data including officer info
+  - `GET /api/offences` (officer + admin) — list offences with joined driver/officer/offence-type names; officers see only their own; supports `driver_id` filter for DriverProfile offence history
+- [x] Updated `backend/server.js` — uncommented and activated `/api/offences` route
+
+**Frontend Components**
+
+- [x] Created `frontend/src/components/StepIndicator.jsx` — horizontal 4-step progress bar; completed steps show green checkmark; current step shows blue ring; responsive (stacks on mobile with label only for active step)
+- [x] Created `frontend/src/components/PenaltyCalculation.jsx` — displays full penalty breakdown: strike weight, strike count change (X→Y with arrow), base fine, multiplier, total fine (large bold); status badges showing previous→new status; skeleton loader during fetch; warning banners for `Flagged` and `Suspended` escalations; colour-coded status changes
+
+**Frontend Pages**
+
+- [x] Created `frontend/src/pages/officer/IssueOffence.jsx` — 4-step wizard:
+  - **Step 1 — Identify Driver**: reuses `DriverSearchBar`; lists search results with name/licence/plate/status/strikes; select driver shows summary card with photo, status badge, strike count; "Change Driver" button; accepts pre-populated driver from navigation state (from `IdentificationResult` / `DriverProfile`) and auto-skips to Step 2
+  - **Step 2 — Select Offence**: fetches active offence types; searchable + filterable by severity; card grid with name/description/base-fine/strike-weight/severity badge; selected card highlighted with blue border + checkmark
+  - **Step 3 — Review**: auto-calls `POST /api/offences/calculate-penalty` on load; shows offence summary card (blue), driver status card, full `PenaltyCalculation` component, optional notes textarea (max 500 chars); escalation confirmation modal appears if new status ∈ {Flagged, Suspended} before submitting
+  - **Step 4 — Confirm**: success screen with green checkmark; offence receipt table (reference ID, date/time, driver, offence, fine, strikes added, new total strikes, new status badge, issuing officer); buttons: "View Driver Profile", "Issue Another Offence", "Return to Dashboard"
+  - Cancel button at top prompts confirmation dialog before discarding progress
+
+**Integration Updates**
+
+- [x] Updated `frontend/src/components/IdentificationResult.jsx` — "Issue Offence" button now calls `onIssueOffence(driver.id, driver)` passing full driver object
+- [x] Updated `frontend/src/pages/officer/IdentifyDriver.jsx` — `handleIssueOffence(driverId, driverObj)` navigates to `/dashboard/officer/issue-offence` with `{ state: { driver } }` so wizard opens at Step 2 (driver pre-selected)
+- [x] Updated `frontend/src/pages/DriverProfile.jsx` — added amber "Issue Offence to This Driver" button visible to both officers and admins; navigates to wizard with full driver object in navigation state (skips Step 1)
+- [x] Updated `frontend/src/components/Navigation.jsx` — added `TicketIcon` SVG; added "Issue Offence" as first item in `OFFICER_NAV` (enabled); added "Issue Offence" to `ADMIN_NAV` (enabled); route: `/dashboard/officer/issue-offence`
+- [x] Updated `frontend/src/App.jsx` — imported `IssueOffence`; added route `officer/issue-offence` inside protected dashboard shell (accessible to both officer and admin)
+- [x] Frontend production build: ✓ 124 modules, 0 errors, 0 warnings
+
+**Transaction Atomicity**
+
+- RPC function uses `FOR UPDATE` to lock the driver row during the transaction
+- `RAISE` on any error causes PostgreSQL to automatically roll back all changes
+- No partial updates possible: offence record and driver update always succeed or both roll back
+- Audit log is part of the same transaction — always consistent
+
+**Files Created / Affected — Phase 8**
+
+| File                                               | Action                         |
+| -------------------------------------------------- | ------------------------------ |
+| `supabase/migrations/004_issue_offence_rpc.sql`    | Created                        |
+| `backend/routes/offences.js`                       | Created                        |
+| `backend/server.js`                                | Modified (route enabled)       |
+| `frontend/src/components/StepIndicator.jsx`        | Created                        |
+| `frontend/src/components/PenaltyCalculation.jsx`   | Created                        |
+| `frontend/src/pages/officer/IssueOffence.jsx`      | Created                        |
+| `frontend/src/components/IdentificationResult.jsx` | Modified (pass driver object)  |
+| `frontend/src/pages/officer/IdentifyDriver.jsx`    | Modified (navigate with state) |
+| `frontend/src/pages/DriverProfile.jsx`             | Modified (Issue Offence btn)   |
+| `frontend/src/components/Navigation.jsx`           | Modified (Issue Offence link)  |
+| `frontend/src/App.jsx`                             | Modified (new route)           |
+
+### Phase 7 — Offence Types & Penalty Rules Management
+
+**Backend**
+
+- [x] Created `backend/routes/offenceTypes.js` — `GET /api/offence-types` (officer + admin), `POST` (admin, with duplicate name check), `PUT /:id` (admin), `DELETE /:id` (admin — soft toggle via `is_active`); full field validation on all write endpoints
+- [x] Created `backend/routes/penaltyRules.js` — `GET /api/penalty-rules` (officer + admin), `POST` (admin, overlap detection), `PUT /:id` (admin, overlap detection excluding self), `DELETE /:id` (admin — hard delete); strike range and multiplier validation
+- [x] Updated `backend/server.js` — uncommented and activated `/api/offence-types` and `/api/penalty-rules` routes
+
+**Frontend Utilities**
+
+- [x] Created `frontend/src/utils/formatters.js` — `formatCurrency(amount)` (₦X,XXX), `formatMultiplier(value)` (X.X×), `formatStrikeRange(min, max)` ("6+" for 9999), `getSeverityClasses(severity)`, `getTierClasses(tierIndex)`
+- [x] Created `frontend/src/utils/penaltyValidation.js` — `checkRangeOverlap(newRule, existingRules, excludeId)`, `checkRangeGaps(allRules)`, `validateStrikeRange(min, max)`
+
+**Frontend Components**
+
+- [x] Created `frontend/src/components/SeverityBadge.jsx` — pill badge: Minor=blue, Moderate=yellow, Severe=red; `size` prop (sm/md/lg)
+- [x] Created `frontend/src/components/OffenceTypeModal.jsx` — create/edit modal; fields: name, description, base fine (₦), strike weight (1–5), severity; formatted fine preview; duplicate name error handling
+- [x] Created `frontend/src/components/PenaltyRuleModal.jsx` — create/edit modal; fields: min/max strikes, multiplier (1.0–5.0×), status flag; live overlap warning banner; live example calculation preview
+
+**Frontend Pages — Admin**
+
+- [x] Created `frontend/src/pages/admin/OffenceTypes.jsx` — sortable table (severity/name/fine/strikes); search + status/severity filters; enable/disable confirmation dialog; loading skeletons; active count badge
+- [x] Created `frontend/src/pages/admin/PenaltyRules.jsx` — colour-coded tier cards (Tier 1=green, Tier 2=yellow, Tier 3+=red); gap detection warning banner; delete confirmation with hard-delete warning
+
+**Frontend Pages — Officer (Read-Only)**
+
+- [x] Created `frontend/src/pages/officer/OffenceTypesView.jsx` — active-only list; search + severity filter; sortable columns; no edit/create/disable actions
+- [x] Created `frontend/src/pages/officer/PenaltyRulesView.jsx` — tier cards with example fine calculation; reference-only, no edit/delete actions
+
+**Navigation & Routing**
+
+- [x] Updated `frontend/src/components/Navigation.jsx` — added "Offence Types" and "Penalty Rules" to both `ADMIN_NAV` and `OFFICER_NAV` (enabled, not "Soon")
+- [x] Updated `frontend/src/App.jsx` — added routes `/dashboard/admin/offence-types`, `/dashboard/admin/penalty-rules` (admin-protected), `/dashboard/officer/offence-types`, `/dashboard/officer/penalty-rules`
+- [x] Frontend production build: ✓ 121 modules, 0 errors, 0 warnings
+
+**Files Created / Affected — Phase 7**
+
+| File                                              | Action                    |
+| ------------------------------------------------- | ------------------------- |
+| `backend/routes/offenceTypes.js`                  | Created                   |
+| `backend/routes/penaltyRules.js`                  | Created                   |
+| `backend/server.js`                               | Modified (routes enabled) |
+| `frontend/src/utils/formatters.js`                | Created                   |
+| `frontend/src/utils/penaltyValidation.js`         | Created                   |
+| `frontend/src/components/SeverityBadge.jsx`       | Created                   |
+| `frontend/src/components/OffenceTypeModal.jsx`    | Created                   |
+| `frontend/src/components/PenaltyRuleModal.jsx`    | Created                   |
+| `frontend/src/pages/admin/OffenceTypes.jsx`       | Created                   |
+| `frontend/src/pages/admin/PenaltyRules.jsx`       | Created                   |
+| `frontend/src/pages/officer/OffenceTypesView.jsx` | Created                   |
+| `frontend/src/pages/officer/PenaltyRulesView.jsx` | Created                   |
+| `frontend/src/components/Navigation.jsx`          | Modified                  |
+| `frontend/src/App.jsx`                            | Modified                  |
 
 ### Phase 0 — Project Scaffolding
 
@@ -334,7 +449,7 @@ All tasks complete. See completed section below.
 | 5     | Driver Management Frontend          | ✅ Completed   |
 | 6     | Facial Identification UI            | ✅ Completed   |
 | MT    | Mini Task — Driver Profile Pictures | ✅ Completed   |
-| 7     | Offence Types & Penalty Rules       | ⬜ Not Started |
+| 7     | Offence Types & Penalty Rules       | ✅ Completed   |
 | 8     | Strike Engine & Offence Issuance    | ⬜ Not Started |
 | 9     | Offence History & Audit Logs        | ⬜ Not Started |
 | 10    | Analytics Dashboard                 | ⬜ Not Started |

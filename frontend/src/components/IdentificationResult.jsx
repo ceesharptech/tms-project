@@ -426,7 +426,7 @@ export default function IdentificationResult({
     <MatchCard
       result={result}
       onViewProfile={() => onViewProfile(result.driver.id)}
-      onIssueOffence={() => onIssueOffence(result.driver.id)}
+      onIssueOffence={() => onIssueOffence(result.driver.id, result.driver)}
       onReset={onReset}
     />
   );

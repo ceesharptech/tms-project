@@ -13,6 +13,7 @@ import OfficerDashboard from "./pages/officer/OfficerDashboard";
 import IdentifyDriver from "./pages/officer/IdentifyDriver";
 import OffenceTypesView from "./pages/officer/OffenceTypesView";
 import PenaltyRulesView from "./pages/officer/PenaltyRulesView";
+import IssueOffence from "./pages/officer/IssueOffence";
 
 // ── Root redirect: /  →  /login  or  /dashboard ────────────────────────────
 function RootRedirect() {
@@ -104,6 +105,7 @@ export default function App() {
                 path="officer/penalty-rules"
                 element={<PenaltyRulesView />}
               />
+              <Route path="officer/issue-offence" element={<IssueOffence />} />
             </Route>
 
             {/* 404 fallback */}

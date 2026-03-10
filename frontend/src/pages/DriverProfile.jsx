@@ -387,7 +387,43 @@ export default function DriverProfile() {
           </div>
         </div>
 
-        {/* ── Section 2: Admin actions ── */}
+        {/* ── Section 2: Issue Offence button (officer + admin) ── */}
+        <button
+          onClick={() =>
+            navigate("/dashboard/officer/issue-offence", {
+              state: {
+                driver: {
+                  id: driver.id,
+                  full_name: driver.full_name,
+                  license_no: driver.license_no,
+                  plate_no: driver.plate_no,
+                  strike_count: driver.strike_count,
+                  status: driver.status,
+                  profile_picture_url: driver.profile_picture_url,
+                },
+              },
+            })
+          }
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold rounded-xl transition shadow-sm"
+        >
+          <svg
+            className="w-4 h-4"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={2}
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
+            />
+          </svg>
+          Issue Offence to This Driver
+        </button>
+
+        {/* ── Section 4: Admin actions ── */}
         {isAdmin && (
           <div className="flex flex-wrap gap-3">
             <button
@@ -459,7 +495,7 @@ export default function DriverProfile() {
           </div>
         )}
 
-        {/* ── Section 3: Offence filters ── */}
+        {/* ── Section 5: Offence filters ── */}
         {offences.length > 0 && (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
@@ -514,7 +550,7 @@ export default function DriverProfile() {
           </div>
         )}
 
-        {/* ── Section 4: Offence history ── */}
+        {/* ── Section 6: Offence history ── */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="px-5 py-4 border-b border-gray-100">
             <h2 className="text-sm font-bold text-gray-800">

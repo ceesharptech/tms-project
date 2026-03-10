@@ -144,7 +144,7 @@ function ManualSelectedResult({
           View Full Profile
         </button>
         <button
-          onClick={() => onIssueOffence(driver.id)}
+          onClick={() => onIssueOffence(driver.id, driver)}
           className="flex-1 px-4 py-2.5 bg-amber-500 text-white rounded-xl text-sm font-semibold hover:bg-amber-600 transition"
         >
           Issue Offence
@@ -298,12 +298,11 @@ export default function IdentifyDriver() {
     navigate(`/dashboard/${prefix}/drivers/${driverId}`);
   }
 
-  function handleIssueOffence(driverId) {
-    // Phase 8 will implement the offence issuance page
-    // Store driver ID in sessionStorage for the offence form to pick up
-    sessionStorage.setItem("pendingOffenceDriverId", driverId);
-    const prefix = user?.role === "admin" ? "admin" : "officer";
-    navigate(`/dashboard/${prefix}/offences/new`);
+  function handleIssueOffence(driverId, driverObj) {
+    // Navigate to the IssueOffence wizard with driver pre-populated (skip Step 1)
+    navigate("/dashboard/officer/issue-offence", {
+      state: { driver: driverObj || { id: driverId } },
+    });
   }
 
   // ── Render ──────────────────────────────────────────────────────────────────
