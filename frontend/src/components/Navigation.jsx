@@ -157,6 +157,18 @@ const ADMIN_NAV = [
     disabled: true,
   },
   {
+    label: "Offence Types",
+    path: "/dashboard/admin/offence-types",
+    icon: <CogIcon />,
+    disabled: false,
+  },
+  {
+    label: "Penalty Rules",
+    path: "/dashboard/admin/penalty-rules",
+    icon: <ChartIcon />,
+    disabled: false,
+  },
+  {
     label: "Analytics",
     path: "/dashboard/admin/analytics",
     icon: <ChartIcon />,
@@ -181,6 +193,18 @@ const OFFICER_NAV = [
     label: "Drivers",
     path: "/dashboard/officer/drivers",
     icon: <UsersIcon />,
+    disabled: false,
+  },
+  {
+    label: "Offence Types",
+    path: "/dashboard/officer/offence-types",
+    icon: <DocumentIcon />,
+    disabled: false,
+  },
+  {
+    label: "Penalty Rules",
+    path: "/dashboard/officer/penalty-rules",
+    icon: <ChartIcon />,
     disabled: false,
   },
   {

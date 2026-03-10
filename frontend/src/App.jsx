@@ -7,8 +7,12 @@ import Login from "./pages/Login";
 import DriverList from "./pages/DriverList";
 import DriverProfile from "./pages/DriverProfile";
 import DriverRegistration from "./pages/admin/DriverRegistration";
+import OffenceTypes from "./pages/admin/OffenceTypes";
+import PenaltyRules from "./pages/admin/PenaltyRules";
 import OfficerDashboard from "./pages/officer/OfficerDashboard";
 import IdentifyDriver from "./pages/officer/IdentifyDriver";
+import OffenceTypesView from "./pages/officer/OffenceTypesView";
+import PenaltyRulesView from "./pages/officer/PenaltyRulesView";
 
 // ── Root redirect: /  →  /login  or  /dashboard ────────────────────────────
 function RootRedirect() {
@@ -70,12 +74,36 @@ export default function App() {
                 }
               />
               <Route path="admin/drivers/:id" element={<DriverProfile />} />
+              <Route
+                path="admin/offence-types"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <OffenceTypes />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="admin/penalty-rules"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <PenaltyRules />
+                  </ProtectedRoute>
+                }
+              />
 
               {/* Officer routes */}
               <Route path="officer" element={<OfficerDashboard />} />
               <Route path="officer/identify" element={<IdentifyDriver />} />
               <Route path="officer/drivers" element={<DriverList />} />
               <Route path="officer/drivers/:id" element={<DriverProfile />} />
+              <Route
+                path="officer/offence-types"
+                element={<OffenceTypesView />}
+              />
+              <Route
+                path="officer/penalty-rules"
+                element={<PenaltyRulesView />}
+              />
             </Route>
 
             {/* 404 fallback */}
