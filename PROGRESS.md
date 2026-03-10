@@ -450,7 +450,7 @@ All tasks complete. See completed section below.
 | 6     | Facial Identification UI            | ✅ Completed   |
 | MT    | Mini Task — Driver Profile Pictures | ✅ Completed   |
 | 7     | Offence Types & Penalty Rules       | ✅ Completed   |
-| 8     | Strike Engine & Offence Issuance    | ⬜ Not Started |
+| 8     | Strike Engine & Offence Issuance    | ✅ Completed   |
 | 9     | Offence History & Audit Logs        | ⬜ Not Started |
 | 10    | Analytics Dashboard                 | ⬜ Not Started |
 | 11    | UI Polish & Responsive Design       | ⬜ Not Started |
