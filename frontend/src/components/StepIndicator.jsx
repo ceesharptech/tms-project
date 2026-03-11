@@ -85,7 +85,7 @@ export default function StepIndicator({ currentStep, steps }) {
           return (
             <div key={label} className="flex items-center gap-2">
               <div
-                className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
                   isComplete
                     ? "bg-green-500 text-white"
                     : isCurrent

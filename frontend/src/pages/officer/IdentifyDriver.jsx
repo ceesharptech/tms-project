@@ -80,7 +80,6 @@ function ManualSelectedResult({
   onIssueOffence,
   onClear,
 }) {
-  const navigate = useNavigate();
   const getStrikeColor = (c) =>
     c <= 2 ? "text-green-700" : c <= 5 ? "text-yellow-700" : "text-red-700";
   const STATUS_BADGE = {
@@ -166,7 +165,6 @@ export default function IdentifyDriver() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const fileInputRef = useRef(null);
-  const abortRef = useRef(null);
 
   // State
   const [activeTab, setActiveTab] = useState("face"); // 'face' | 'manual'
@@ -396,7 +394,7 @@ export default function IdentifyDriver() {
                 <button
                   onClick={() => {
                     setInputMode("camera");
-                    handleReset();
+                    // handleReset();
                   }}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
                     inputMode === "camera"

@@ -366,7 +366,7 @@ function Step2SelectOffence({
           No offence types match your search.
         </p>
       ) : (
-        <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
+        <div className="space-y-2 max-h-105 overflow-y-auto pr-1">
           {filtered.map((o) => {
             const isSelected = picked?.id === o.id;
             return (

@@ -115,7 +115,7 @@ export default function OffenceTypesView() {
 
         {/* Filters */}
         <div className="bg-white rounded-xl border border-gray-200 p-4 mb-5 flex flex-wrap gap-3 items-end">
-          <div className="flex-1 min-w-[180px]">
+          <div className="flex-1 min-w-45">
             <label className="block text-xs font-medium text-gray-600 mb-1">
               Search
             </label>

@@ -88,7 +88,7 @@ async function identifyFace(
   try {
     const response = await axios.post(`${FACE_SERVICE_URL}/identify`, form, {
       headers: form.getHeaders(),
-      timeout: 30_000,
+      timeout: 90_000,
     });
     return response.data;
   } catch (err) {

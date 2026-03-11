@@ -17,6 +17,13 @@ export default function FaceCapture({ onCapture, onCancel }) {
   const [error, setError] = useState(null);
   const [flash, setFlash] = useState(false);
 
+  function stopStream() {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+  }
+
   // Start camera on mount
   useEffect(() => {
     let cancelled = false;
@@ -71,13 +78,6 @@ export default function FaceCapture({ onCapture, onCancel }) {
       stopStream();
     };
   }, []);
-
-  function stopStream() {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop());
-      streamRef.current = null;
-    }
-  }
 
   const handleCapture = useCallback(() => {
     const video = videoRef.current;
