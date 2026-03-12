@@ -310,7 +310,9 @@ export default function DriverList() {
                     </td>
                     {/* Face enrolled */}
                     <td className="px-4 py-3 whitespace-nowrap hidden sm:table-cell">
-                      <FaceEnrolledBadge enrolled={driver.face_enrolled} />
+                      <FaceEnrolledBadge
+                        enrolled={driver.face_embedding !== null}
+                      />
                     </td>
                     {/* Actions */}
                     <td className="px-4 py-3 whitespace-nowrap">
