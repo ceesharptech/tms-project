@@ -2,6 +2,7 @@ const express = require("express");
 const supabase = require("../services/supabase");
 const { authenticateToken } = require("../middleware/auth");
 const { requireRole } = require("../middleware/roleCheck");
+const { sendOffenceNotification } = require("../services/emailService");
 
 const router = express.Router();
 router.use(authenticateToken);
@@ -121,7 +122,8 @@ router.post(
 // officer_id is taken from the authenticated JWT — not from the request body.
 router.post("/issue", requireRole(["officer", "admin"]), async (req, res) => {
   try {
-    const { driver_id, offence_type_id, notes } = req.body;
+    const { driver_id, contact, offence_name, offence_type_id, notes } =
+      req.body;
     const officer_id = req.user.id; // from JWT — never trust client
 
     // Input validation
@@ -212,6 +214,15 @@ router.post("/issue", requireRole(["officer", "admin"]), async (req, res) => {
       full_name: req.user.full_name,
       officer_id: req.user.officer_id,
     };
+
+    // Send notification to the driver
+    if (contact) {
+      const emailConfirmation = await sendOffenceNotification(contact, {
+        officer_name: result.officer.full_name,
+        offence_name,
+      });
+      console.log("Email notification result:", emailConfirmation);
+    }
 
     return res.status(201).json({ success: true, data: result });
   } catch (err) {
