@@ -2,10 +2,12 @@ import { useState, useEffect } from "react";
 
 const SystemStatus = () => {
   const [status, setStatus] = useState("booting");
-  const maxRetries = 10;
-  const [attempts, setAttempts] = useState(0);
+  const maxRetries = 5;
 
   useEffect(() => {
+    let attempts = 0;
+    let timeoutId;
+
     const checkHealth = async () => {
       try {
         const response = await fetch(
@@ -13,24 +15,28 @@ const SystemStatus = () => {
         );
         if (response.ok) {
           setStatus("operational");
-        } else if (attempts < maxRetries) {
-          setAttempts((a) => a + 1);
-          setTimeout(checkHealth, 3000);
-        } else {
-          setStatus("error");
+          return; // Stop the loop on success
         }
-      } catch (error) {
-        if (attempts < maxRetries) {
-          setAttempts((a) => a + 1);
-          setTimeout(checkHealth, 3000);
-        } else {
-          setStatus("error");
-          console.error("Health check failed after multiple attempts:", error);
-        }
+      } catch (err) {
+        console.error("Ping failed, retrying...");
+        console.log(`Attempt ${attempts + 1} of ${maxRetries}`);
+        console.error(err);
+      }
+
+      // Logic for next retry
+      attempts++;
+      if (attempts < maxRetries) {
+        timeoutId = setTimeout(checkHealth, 8000);
+      } else {
+        setStatus("error");
       }
     };
+
     checkHealth();
-  }, [attempts]);
+
+    // Cleanup: prevents the loop from running if the user leaves the page
+    return () => clearTimeout(timeoutId);
+  }, []); // Empty dependency array ensures it starts ONLY once on mount
 
   const config = {
     booting: { text: "System Booting", color: "bg-orange-500 animate-pulse" },
