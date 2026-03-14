@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import SystemStatus from "../components/SystemStatus";
 
 // ── Inline SVG icons ──────────────────────────────────────────────────────────
 function ShieldStarIcon() {
@@ -176,10 +177,7 @@ export default function Login() {
       {/* ── Top status bar ─────────────────────────────────────────────── */}
       <header className="flex items-center justify-between px-6 py-3">
         <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
-          <span className="text-xs font-semibold text-gray-500 tracking-widest uppercase">
-            System Operational
-          </span>
+          <SystemStatus />
         </div>
         <span className="text-xs text-gray-400 font-medium">
           v1.0.0 (Stable)
