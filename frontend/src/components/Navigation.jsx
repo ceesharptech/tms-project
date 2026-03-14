@@ -303,7 +303,7 @@ function SidebarContent({ onClose, user, logout }) {
           <ShieldIcon />
         </div>
         <div>
-          <p className="text-sm font-bold text-gray-900 leading-tight">DDITS</p>
+          <p className="text-sm font-bold text-gray-900 leading-tight">TMS</p>
           <p className="text-xs text-gray-400">Traffic Enforcement</p>
         </div>
       </div>

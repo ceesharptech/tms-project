@@ -95,7 +95,7 @@ export default function DashboardLayout() {
               {/* Brand on mobile (replaces sidebar) */}
               <div className="flex items-center gap-1.5 lg:hidden">
                 <ShieldIcon />
-                <span className="text-sm font-bold text-gray-900">DDITS</span>
+                <span className="text-sm font-bold text-gray-900">TMS</span>
               </div>
               <span className="hidden lg:block text-sm font-semibold text-gray-700">
                 {getPageTitle()}
