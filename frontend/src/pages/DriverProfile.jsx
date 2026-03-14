@@ -400,6 +400,7 @@ export default function DriverProfile() {
                   strike_count: driver.strike_count,
                   status: driver.status,
                   profile_picture_url: driver.profile_picture_url,
+                  contact: driver.contact,
                 },
               },
             })

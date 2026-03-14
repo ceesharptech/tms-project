@@ -837,7 +837,9 @@ export default function IssueOffence() {
     try {
       const res = await api.post("/offences/issue", {
         driver_id: selectedDriver.id,
+        contact: selectedDriver.contact,
         offence_type_id: selectedOffence.id,
+        offence_name: selectedOffence.name,
         notes: notes.trim() || undefined,
       });
 
