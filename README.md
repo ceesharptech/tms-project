@@ -1,4 +1,4 @@
-# DDITS — Digital Driver Identification and Traffic Offence Penalty System
+# Traffic Offence Management System (T.O.M.S)
 
 A web-based enforcement and driver identification platform using facial recognition and a centralized strike-based penalty engine.
 
@@ -118,27 +118,4 @@ tms-project/
 ├── test-data/         # Sample drivers, offence types, face images
 ├── docs/              # Project documentation & schema
 └── .gitignore
-```
-
----
-
-## Development Phases
-
-| Phase | Description                       |
-| ----- | --------------------------------- |
-| 0     | Project Scaffolding ✅            |
-| 1     | Database Schema & Supabase Setup  |
-| 2     | Authentication System             |
-| 3     | Python Facial Recognition Service |
-| 4     | Driver Management Backend         |
-| 5     | Driver Management Frontend        |
-| 6     | Facial Identification UI          |
-| 7     | Offence Types & Penalty Rules     |
-| 8     | Strike Engine & Offence Issuance  |
-| 9     | Offence History & Audit Logs      |
-| 10    | Analytics Dashboard               |
-| 11+   | Polish, Testing, Deployment       |
-
-```
-
 ```
