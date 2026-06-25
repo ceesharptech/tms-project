@@ -73,7 +73,7 @@ export default function DashboardLayout() {
     : "?";
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans">
+    <div className="min-h-screen bg-gray-50 font-plus">
       <Navigation
         mobileOpen={mobileOpen}
         onMobileClose={() => setMobileOpen(false)}

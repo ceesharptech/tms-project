@@ -179,7 +179,7 @@ const ADMIN_NAV = [
     label: "Offences",
     path: "/dashboard/admin/offences",
     icon: <DocumentIcon />,
-    disabled: true,
+    disabled: false,
   },
   {
     label: "Offence Types",
@@ -193,18 +193,18 @@ const ADMIN_NAV = [
     icon: <ChartIcon />,
     disabled: false,
   },
-  {
-    label: "Analytics",
-    path: "/dashboard/admin/analytics",
-    icon: <ChartIcon />,
-    disabled: true,
-  },
-  {
-    label: "Settings",
-    path: "/dashboard/admin/settings",
-    icon: <CogIcon />,
-    disabled: true,
-  },
+  // {
+  //   label: "Analytics",
+  //   path: "/dashboard/admin/analytics",
+  //   icon: <ChartIcon />,
+  //   disabled: true,
+  // },
+  // {
+  //   label: "Settings",
+  //   path: "/dashboard/admin/settings",
+  //   icon: <CogIcon />,
+  //   disabled: true,
+  // },
 ];
 
 const OFFICER_NAV = [
@@ -238,12 +238,12 @@ const OFFICER_NAV = [
     icon: <ChartIcon />,
     disabled: false,
   },
-  {
-    label: "My Offences",
-    path: "/dashboard/officer/offences",
-    icon: <DocumentIcon />,
-    disabled: true,
-  },
+  // {
+  //   label: "My Offences",
+  //   path: "/dashboard/officer/offences",
+  //   icon: <DocumentIcon />,
+  //   disabled: true,
+  // },
 ];
 
 // ── NavItem ────────────────────────────────────────────────────────────────────

@@ -1,4 +1,5 @@
 import { formatCurrency, formatMultiplier } from "../utils/formatters";
+import { AlertTriangle } from "lucide-react";
 
 // Status color helpers
 function statusColor(status) {
@@ -208,13 +209,15 @@ export default function PenaltyCalculation({ calculation, loading, error }) {
       {/* Warning banners for escalation */}
       {isCritical && (
         <div
-          className={`p-4 rounded-2xl border flex items-start gap-3 ${
+          className={`p-4 rounded-2xl border flex items-center gap-3 ${
             new_status === "Suspended"
               ? "bg-gray-50 border-gray-300"
               : "bg-red-50 border-red-200"
           }`}
         >
-          <span className="text-2xl shrink-0">⚠️</span>
+          <span className="text-2xl text-red-700 shrink-0">
+            <AlertTriangle />
+          </span>
           <div>
             <p
               className={`text-sm font-bold ${

@@ -127,12 +127,12 @@ export default function OfficerDashboard() {
             description="Search and browse driver profiles"
             onClick={() => navigate("/dashboard/officer/drivers")}
           />
-          <QuickActionCard
+          {/* <QuickActionCard
             icon={<DocumentIcon />}
             title="My Offences"
             description="View offences you've issued"
             disabled
-          />
+          /> */}
         </div>
       </section>
 
@@ -171,7 +171,7 @@ export default function OfficerDashboard() {
       </section>
 
       {/* Recent offences placeholder */}
-      <section>
+      {/* <section>
         <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
           Recent Offences Issued
         </h2>
@@ -180,7 +180,7 @@ export default function OfficerDashboard() {
             Offence history will appear here once Phase 8 is complete.
           </p>
         </div>
-      </section>
+      </section> */}
     </div>
   );
 }

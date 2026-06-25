@@ -32,7 +32,7 @@ export default function FaceCapture({ onCapture, onCancel }) {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: {
-            facingMode: "environment",
+            facingMode: "user", //ENVIRONMENT OR USER
             width: { ideal: 640 },
             height: { ideal: 640 },
           },

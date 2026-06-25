@@ -10,9 +10,7 @@ const SystemStatus = () => {
 
     const checkHealth = async () => {
       try {
-        const response = await fetch(
-          "https://tms-face-service-production.up.railway.app/health",
-        );
+        const response = await fetch("http://localhost:8000/health");
         if (response.ok) {
           setStatus("operational");
           return; // Stop the loop on success

@@ -173,7 +173,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-gray-100 flex flex-col font-plus">
       {/* ── Top status bar ─────────────────────────────────────────────── */}
       <header className="flex items-center justify-between px-6 py-3">
         <div className="flex items-center gap-2">
@@ -303,7 +303,7 @@ export default function Login() {
       {/* ── Page footer ─────────────────────────────────────────────────── */}
       <footer className="text-center py-4">
         <p className="text-xs text-gray-400">
-          © 2024 Department of Traffic Control. Government Use Only.
+          © 2026 Department of Traffic Control. Government Use Only.
         </p>
       </footer>
 

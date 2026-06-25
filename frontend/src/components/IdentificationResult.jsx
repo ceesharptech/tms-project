@@ -1,4 +1,5 @@
 import { useAuth } from "../context/AuthContext";
+import { TriangleAlert, X } from "lucide-react";
 
 // ── Confidence badge helpers ──────────────────────────────────────────────────
 
@@ -75,7 +76,7 @@ function MatchCard({ result, onViewProfile, onIssueOffence, onReset }) {
       {/* Low confidence warning */}
       {confidence < 70 && (
         <div className="flex items-start gap-2 p-3 bg-orange-50 border border-orange-200 rounded-xl text-sm text-orange-800">
-          <span className="shrink-0 mt-0.5">⚠️</span>
+          <TriangleAlert className="shrink-0 mt-0.5" />
           <p>
             Low confidence match. Please verify driver details manually before
             proceeding.
@@ -284,7 +285,7 @@ function NoMatchCard({ onReset, onSwitchTab, isAdmin }) {
 
 const ERROR_CONFIG = {
   NO_FACE: {
-    icon: "⚠️",
+    icon: <TriangleAlert />,
     heading: "No Face Detected",
     message:
       "Could not detect a face in this image. Ensure the photo shows a clear, frontal view of the driver's face.",
@@ -293,7 +294,7 @@ const ERROR_CONFIG = {
     textCls: "text-yellow-700",
   },
   MULTIPLE_FACES: {
-    icon: "⚠️",
+    icon: <TriangleAlert />,
     heading: "Multiple Faces Detected",
     message:
       "The photo contains more than one face. Please upload a photo with only the driver.",
@@ -302,7 +303,7 @@ const ERROR_CONFIG = {
     textCls: "text-yellow-700",
   },
   POOR_QUALITY: {
-    icon: "⚠️",
+    icon: <TriangleAlert />,
     heading: "Image Quality Issue",
     message: null,
     cls: "bg-yellow-50 border-yellow-200",
@@ -310,7 +311,7 @@ const ERROR_CONFIG = {
     textCls: "text-yellow-700",
   },
   SERVICE_UNAVAILABLE: {
-    icon: "❌",
+    icon: <X />,
     heading: "Service Temporarily Unavailable",
     message:
       "The facial recognition service is not responding. Please try manual search or try again later.",
@@ -319,7 +320,7 @@ const ERROR_CONFIG = {
     textCls: "text-red-700",
   },
   TIMEOUT: {
-    icon: "❌",
+    icon: <X />,
     heading: "Request Timed Out",
     message:
       "The request took too long. The service may be busy — please try again.",
@@ -328,7 +329,7 @@ const ERROR_CONFIG = {
     textCls: "text-red-700",
   },
   NETWORK_ERROR: {
-    icon: "❌",
+    icon: <X />,
     heading: "Connection Error",
     message: "Cannot connect to the server. Check your connection.",
     cls: "bg-red-50 border-red-200",
@@ -339,7 +340,7 @@ const ERROR_CONFIG = {
 
 function ErrorCard({ error, onReset, onSwitchTab }) {
   const cfg = ERROR_CONFIG[error?.type] || {
-    icon: "❌",
+    icon: <X />,
     heading: "Identification Failed",
     message: null,
     cls: "bg-red-50 border-red-200",

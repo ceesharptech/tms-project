@@ -25,7 +25,7 @@ async function enrollFace(driverId, files) {
   try {
     const response = await axios.post(`${FACE_SERVICE_URL}/enroll`, form, {
       headers: form.getHeaders(),
-      timeout: 30_000,
+      timeout: 60_000,
     });
 
     const { embedding, model, num_images } = response.data;
