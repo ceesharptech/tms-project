@@ -40,7 +40,7 @@ cd tms-project
 cd backend
 cp .env.example .env          # fill in your Supabase keys & JWT secrets
 npm install
-npm run dev                   # starts on http://localhost:5000
+node server.js                   # starts on http://localhost:5000
 ```
 
 Health check: `GET http://localhost:5000/health`
