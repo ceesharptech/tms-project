@@ -405,7 +405,7 @@ export default function DriverProfile() {
               },
             })
           }
-          className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold rounded-xl transition shadow-sm"
+          className="md:w-1/4 w-full flex items-center justify-center gap-2 px-4 py-3 bg-amber-500 hover:cursor-pointer hover:bg-amber-600 text-white text-sm font-bold rounded-xl transition shadow-sm"
         >
           <svg
             className="w-4 h-4"

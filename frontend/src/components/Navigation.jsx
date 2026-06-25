@@ -164,6 +164,12 @@ function ShieldIcon() {
 
 const ADMIN_NAV = [
   {
+    label: "Identify Driver",
+    path: "/dashboard/officer/identify",
+    icon: <DocumentIcon />,
+    disabled: false,
+  },
+  {
     label: "Drivers",
     path: "/dashboard/admin/drivers",
     icon: <UsersIcon />,
@@ -173,12 +179,6 @@ const ADMIN_NAV = [
     label: "Issue Offence",
     path: "/dashboard/officer/issue-offence",
     icon: <TicketIcon />,
-    disabled: false,
-  },
-  {
-    label: "Offences",
-    path: "/dashboard/admin/offences",
-    icon: <DocumentIcon />,
     disabled: false,
   },
   {
