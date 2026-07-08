@@ -1,0 +1,84 @@
+# docker-compose.yml
+
+services:
+
+  # ── PostgreSQL Database ──────────────────────────────────────
+  tms-postgres:
+    image: postgres:18.4-alpine
+    container_name: tms-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./supabase/migrations:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Express.js Backend ───────────────────────────────────────
+  tms-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: tms-backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      USE_LOCAL_DB: "true"
+      DATABASE_URL: ${DATABASE_URL}
+      NODE_ENV: ${NODE_ENV}
+      PORT: ${PORT}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      FACE_SERVICE_URL: ${FACE_SERVICE_URL}
+    ports:
+      - "5000:5000"
+    depends_on:
+      tms-postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5000/api/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ── Python Face Recognition Service ─────────────────────────
+  tms-face-service:
+    build:
+      context: ./face-service
+      dockerfile: Dockerfile
+    container_name: tms-face-service
+    restart: unless-stopped
+    environment:
+      FACE_RECOGNITION_THRESHOLD: ${FACE_RECOGNITION_THRESHOLD}
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8000/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+
+  # ── React Frontend ───────────────────────────────────────────
+  tms-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+    container_name: tms-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - tms-backend
+
+volumes:
+  postgres_data:

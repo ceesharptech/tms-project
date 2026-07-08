@@ -28,9 +28,7 @@ RUN python -c "from deepface import DeepFace; \
     DeepFace.build_model('ArcFace'); \
     print('ArcFace model downloaded successfully')"
 
-# Expose port (Railway will assign PORT via environment variable)
 EXPOSE 8000
 
 # Run the FastAPI app
-# Railway provides PORT env var, default to 8000 if not set
-CMD uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

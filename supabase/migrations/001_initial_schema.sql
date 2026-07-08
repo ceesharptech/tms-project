@@ -255,8 +255,8 @@ CREATE POLICY "audit_logs_insert_authenticated" ON audit_logs
 -- Users (passwords hashed with bcrypt cost-factor 10 via pgcrypto)
 INSERT INTO users (officer_id, email, password_hash, role, full_name)
 VALUES
-  ('000001', 'eniolaamusu6@gmail.com',
-   crypt('Allowme2006!', gen_salt('bf', 10)), 'admin',   'System Administrator'),
+  ('000001', 'admin@ddits.com',
+   crypt('admin12345', gen_salt('bf', 10)), 'admin',   'System Administrator'),
   ('100001', 'officer@ddits.com',
    crypt('Officer123!',  gen_salt('bf', 10)), 'officer', 'John Mensah'),
   ('100002', 'officer2@ddits.com',
