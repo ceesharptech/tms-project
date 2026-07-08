@@ -1,4 +1,11 @@
-require("dotenv").config();
+// Load .env.local first (if present) so local overrides take effect before
+// any module reads process.env. Falls back to .env for production/Supabase mode.
+const { existsSync } = require('fs')
+if (existsSync('.env.local')) {
+  require('dotenv').config({ path: '.env.local' })
+} else {
+  require('dotenv').config()
+}
 const express = require("express");
 const cors = require("cors");
 

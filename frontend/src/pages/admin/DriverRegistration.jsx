@@ -194,6 +194,8 @@ export default function DriverRegistration() {
     if (form.plate_no.trim()) formData.append("plate_no", form.plate_no.trim());
     if (form.contact.trim()) formData.append("contact", form.contact.trim());
     if (profilePic) formData.append("profile_picture", profilePic);
+    const newFormData = JSON.stringify(formData)
+    console.log(newFormData)
 
     try {
       const res = await api.post("/drivers", formData);

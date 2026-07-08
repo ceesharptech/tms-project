@@ -1,7 +1,8 @@
 const express = require("express");
 const multer = require("multer");
 
-const supabase = require("../services/supabase");
+const db = require("../utils/db");
+const { isLocal } = require("../utils/db");
 const { enrollFace, identifyFace } = require("../services/faceService");
 const {
   uploadProfilePicture,
@@ -61,16 +62,30 @@ router.get("/", requireRole(["officer", "admin"]), async (req, res) => {
     const limit = Math.min(parseInt(req.query.limit) || 20, 100);
     const offset = parseInt(req.query.offset) || 0;
 
-    const {
-      data: drivers,
-      error,
-      count,
-    } = await supabase
-      .from("drivers")
-      .select("*", { count: "exact" })
-      .neq("status", "Deleted")
-      .order("created_at", { ascending: false })
-      .range(offset, offset + limit - 1);
+    let drivers, count, error;
+
+    if (isLocal) {
+      const result = await db.query(
+        `SELECT *, COUNT(*) OVER() AS total_count
+         FROM drivers
+         WHERE status != 'Deleted'
+         ORDER BY created_at DESC
+         LIMIT $1 OFFSET $2`,
+        [limit, offset]
+      );
+      drivers = result.rows.map(({ total_count, ...row }) => row);
+      count = result.rows[0]?.total_count ? parseInt(result.rows[0].total_count) : 0;
+    } else {
+      const res2 = await db
+        .from("drivers")
+        .select("*", { count: "exact" })
+        .neq("status", "Deleted")
+        .order("created_at", { ascending: false })
+        .range(offset, offset + limit - 1);
+      drivers = res2.data;
+      count = res2.count;
+      error = res2.error;
+    }
 
     if (error) throw error;
 
@@ -105,13 +120,26 @@ router.post(
 
     try {
       // Fetch all drivers that have an embedding stored
-      const { data: drivers, error: dbError } = await supabase
-        .from("drivers")
-        .select(
-          "id, full_name, license_no, plate_no, contact, status, strike_count, face_embedding",
-        )
-        .neq("status", "Deleted")
-        .not("face_embedding", "is", null);
+      let drivers, dbError;
+
+      if (isLocal) {
+        const result = await db.query(
+          `SELECT id, full_name, license_no, plate_no, contact, status, strike_count, face_embedding
+           FROM drivers
+           WHERE status != 'Deleted' AND face_embedding IS NOT NULL`
+        );
+        drivers = result.rows;
+      } else {
+        const res2 = await db
+          .from("drivers")
+          .select(
+            "id, full_name, license_no, plate_no, contact, status, strike_count, face_embedding",
+          )
+          .neq("status", "Deleted")
+          .not("face_embedding", "is", null);
+        drivers = res2.data;
+        dbError = res2.error;
+      }
 
       if (dbError) throw dbError;
 
@@ -152,13 +180,25 @@ router.post(
       }
 
       // Fetch full driver record to include profile_picture_url
-      const { data: fullDriver } = await supabase
-        .from("drivers")
-        .select(
-          "id, full_name, license_no, plate_no, contact, status, strike_count, profile_picture_url",
-        )
-        .eq("id", matchedDriver.id)
-        .single();
+      let fullDriver;
+      if (isLocal) {
+        const r2 = await db.query(
+          `SELECT id, full_name, license_no, plate_no, contact, status, strike_count, profile_picture_url
+           FROM drivers
+           WHERE id = $1`,
+          [matchedDriver.id]
+        );
+        fullDriver = r2.rows[0] || null;
+      } else {
+        const res2 = await db
+          .from("drivers")
+          .select(
+            "id, full_name, license_no, plate_no, contact, status, strike_count, profile_picture_url",
+          )
+          .eq("id", matchedDriver.id)
+          .single();
+        fullDriver = res2.data;
+      }
 
       const driverData = fullDriver || matchedDriver;
       const { face_embedding: _removed, ...safeDriverData } = driverData;
@@ -204,17 +244,37 @@ router.post("/search", requireRole(["officer", "admin"]), async (req, res) => {
       });
     }
 
-    let dbQuery = supabase.from("drivers").select("*").neq("status", "Deleted");
+    let drivers, error;
 
-    if (searchType === "name") {
-      dbQuery = dbQuery.ilike("full_name", `%${query}%`);
-    } else if (searchType === "license") {
-      dbQuery = dbQuery.eq("license_no", query);
+    if (isLocal) {
+      let sql, params;
+      if (searchType === "name") {
+        sql = `SELECT * FROM drivers WHERE status != 'Deleted' AND full_name ILIKE $1 ORDER BY full_name`;
+        params = [`%${query}%`];
+      } else if (searchType === "license") {
+        sql = `SELECT * FROM drivers WHERE status != 'Deleted' AND license_no = $1 ORDER BY full_name`;
+        params = [query];
+      } else {
+        sql = `SELECT * FROM drivers WHERE status != 'Deleted' AND plate_no = $1 ORDER BY full_name`;
+        params = [query];
+      }
+      const result = await db.query(sql, params);
+      drivers = result.rows;
     } else {
-      dbQuery = dbQuery.eq("plate_no", query);
-    }
+      let dbQuery = db.from("drivers").select("*").neq("status", "Deleted");
 
-    const { data: drivers, error } = await dbQuery.order("full_name");
+      if (searchType === "name") {
+        dbQuery = dbQuery.ilike("full_name", `%${query}%`);
+      } else if (searchType === "license") {
+        dbQuery = dbQuery.eq("license_no", query);
+      } else {
+        dbQuery = dbQuery.eq("plate_no", query);
+      }
+
+      const res2 = await dbQuery.order("full_name");
+      drivers = res2.data;
+      error = res2.error;
+    }
 
     if (error) throw error;
 
@@ -237,11 +297,24 @@ router.get("/:id", requireRole(["officer", "admin"]), async (req, res) => {
   try {
     const { id } = req.params;
 
-    const { data: driver, error } = await supabase
-      .from("drivers")
-      .select("*")
-      .eq("id", id)
-      .single();
+    let driver, error;
+
+    if (isLocal) {
+      const result = await db.query(
+        `SELECT * FROM drivers WHERE id = $1`,
+        [id]
+      );
+      driver = result.rows[0] || null;
+      if (!driver) error = { message: "not found" };
+    } else {
+      const res2 = await db
+        .from("drivers")
+        .select("*")
+        .eq("id", id)
+        .single();
+      driver = res2.data;
+      error = res2.error;
+    }
 
     if (error || !driver) {
       return res.status(404).json({
@@ -252,13 +325,13 @@ router.get("/:id", requireRole(["officer", "admin"]), async (req, res) => {
     }
 
     // Enrich with enrollment status (don't expose raw embedding in this route)
-    const result = {
+    const result2 = {
       ...driver,
       face_enrolled: driver.face_embedding !== null,
       face_embedding: undefined, // strip raw embedding from GET response
     };
 
-    return res.json({ success: true, data: result });
+    return res.json({ success: true, data: result2 });
   } catch (err) {
     logError(
       "GET /api/drivers/:id",
@@ -305,18 +378,32 @@ router.post(
       console.log(req.body);
       const { full_name, license_no, plate_no, contact } = req.body;
 
-      const { data: driver, error } = await supabase
-        .from("drivers")
-        .insert({
-          full_name: full_name.trim(),
-          license_no,
-          plate_no: plate_no || null,
-          contact: contact || null,
-          status: "Active",
-          strike_count: 0,
-        })
-        .select()
-        .single();
+      let driver, error;
+
+      if (isLocal) {
+        const result = await db.query(
+          `INSERT INTO drivers (full_name, license_no, plate_no, contact, status, strike_count)
+           VALUES ($1, $2, $3, $4, 'Active', 0)
+           RETURNING *`,
+          [full_name.trim(), license_no, plate_no || null, contact || null]
+        );
+        driver = result.rows[0];
+      } else {
+        const res2 = await db
+          .from("drivers")
+          .insert({
+            full_name: full_name.trim(),
+            license_no,
+            plate_no: plate_no || null,
+            contact: contact || null,
+            status: "Active",
+            strike_count: 0,
+          })
+          .select()
+          .single();
+        driver = res2.data;
+        error = res2.error;
+      }
 
       if (error) {
         if (error.code === "23505") {
@@ -337,14 +424,23 @@ router.post(
             req.file.buffer,
             req.file.mimetype,
           );
-          const { data: updated } = await supabase
-            .from("drivers")
-            .update({ profile_picture_url: publicUrl })
-            .eq("id", driver.id)
-            .select()
-            .single();
-          driver.profile_picture_url =
-            updated?.profile_picture_url ?? publicUrl;
+
+          if (isLocal) {
+            const r2 = await db.query(
+              `UPDATE drivers SET profile_picture_url = $1 WHERE id = $2 RETURNING *`,
+              [publicUrl, driver.id]
+            );
+            driver.profile_picture_url = r2.rows[0]?.profile_picture_url ?? publicUrl;
+          } else {
+            const { data: updated } = await db
+              .from("drivers")
+              .update({ profile_picture_url: publicUrl })
+              .eq("id", driver.id)
+              .select()
+              .single();
+            driver.profile_picture_url =
+              updated?.profile_picture_url ?? publicUrl;
+          }
         } catch (uploadErr) {
           console.error(
             `[POST /api/drivers] Profile picture upload failed for ${driver.id}:`,
@@ -437,46 +533,80 @@ router.put(
       if (hasTextUpdates) {
         updates.updated_at = new Date().toISOString();
 
-        const { data, error } = await supabase
-          .from("drivers")
-          .update(updates)
-          .eq("id", id)
-          .neq("status", "Deleted")
-          .select()
-          .single();
-
-        if (error || !data) {
-          if (error?.code === "23505") {
-            return res.status(409).json({
+        if (isLocal) {
+          const setClauses = Object.keys(updates)
+            .map((key, i) => `${key} = $${i + 2}`)
+            .join(", ");
+          const values = [id, ...Object.values(updates)];
+          const result = await db.query(
+            `UPDATE drivers SET ${setClauses} WHERE id = $1 AND status != 'Deleted' RETURNING *`,
+            values
+          );
+          if (result.rows.length === 0) {
+            return res.status(404).json({
               error: true,
-              message: "A driver with that license number already exists",
-              code: "DUPLICATE_LICENSE",
+              message: "Driver not found",
+              code: "NOT_FOUND",
             });
           }
-          return res.status(404).json({
-            error: true,
-            message: "Driver not found",
-            code: "NOT_FOUND",
-          });
+          driver = result.rows[0];
+        } else {
+          const { data, error } = await db
+            .from("drivers")
+            .update(updates)
+            .eq("id", id)
+            .neq("status", "Deleted")
+            .select()
+            .single();
+
+          if (error || !data) {
+            if (error?.code === "23505") {
+              return res.status(409).json({
+                error: true,
+                message: "A driver with that license number already exists",
+                code: "DUPLICATE_LICENSE",
+              });
+            }
+            return res.status(404).json({
+              error: true,
+              message: "Driver not found",
+              code: "NOT_FOUND",
+            });
+          }
+          driver = data;
         }
-        driver = data;
       } else {
         // Only a profile picture update — fetch the current driver record
-        const { data, error } = await supabase
-          .from("drivers")
-          .select("*")
-          .eq("id", id)
-          .neq("status", "Deleted")
-          .single();
+        if (isLocal) {
+          const result = await db.query(
+            `SELECT * FROM drivers WHERE id = $1 AND status != 'Deleted'`,
+            [id]
+          );
+          if (result.rows.length === 0) {
+            return res.status(404).json({
+              error: true,
+              message: "Driver not found",
+              code: "NOT_FOUND",
+            });
+          }
+          driver = result.rows[0];
+        } else {
+          const { data, error } = await db
+            .from("drivers")
+            .select("*")
+            .eq("id", id)
+            .neq("status", "Deleted")
+            .single();
 
-        if (error || !data) {
-          return res.status(404).json({
-            error: true,
-            message: "Driver not found",
-            code: "NOT_FOUND",
-          });
+          if (error || !data) {
+            return res.status(404).json({
+              error: true,
+              message: "Driver not found",
+              code: "NOT_FOUND",
+            });
+          }
+          driver = data;
         }
-        driver = data;
       }
 
       // Handle profile picture upload/update
@@ -493,17 +623,25 @@ router.put(
             req.file.mimetype,
           );
 
-          const { data: updated } = await supabase
-            .from("drivers")
-            .update({
-              profile_picture_url: publicUrl,
-              updated_at: new Date().toISOString(),
-            })
-            .eq("id", id)
-            .select()
-            .single();
+          if (isLocal) {
+            const r2 = await db.query(
+              `UPDATE drivers SET profile_picture_url = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
+              [publicUrl, id]
+            );
+            if (r2.rows[0]) driver = r2.rows[0];
+          } else {
+            const { data: updated } = await db
+              .from("drivers")
+              .update({
+                profile_picture_url: publicUrl,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", id)
+              .select()
+              .single();
 
-          if (updated) driver = updated;
+            if (updated) driver = updated;
+          }
         } catch (uploadErr) {
           console.error(
             `[PUT /api/drivers/:id] Profile picture update failed for ${id}:`,
@@ -538,13 +676,28 @@ router.delete("/:id", requireRole(["admin"]), async (req, res) => {
   try {
     const { id } = req.params;
 
-    const { data: driver, error } = await supabase
-      .from("drivers")
-      .update({ status: "Deleted", updated_at: new Date().toISOString() })
-      .eq("id", id)
-      .neq("status", "Deleted")
-      .select("id, full_name")
-      .single();
+    let driver, error;
+
+    if (isLocal) {
+      const result = await db.query(
+        `UPDATE drivers
+         SET status = 'Deleted', updated_at = NOW()
+         WHERE id = $1 AND status != 'Deleted'
+         RETURNING id, full_name`,
+        [id]
+      );
+      driver = result.rows[0] || null;
+    } else {
+      const res2 = await db
+        .from("drivers")
+        .update({ status: "Deleted", updated_at: new Date().toISOString() })
+        .eq("id", id)
+        .neq("status", "Deleted")
+        .select("id, full_name")
+        .single();
+      driver = res2.data;
+      error = res2.error;
+    }
 
     if (error || !driver) {
       return res.status(404).json({
@@ -596,11 +749,24 @@ router.post(
       }
 
       // Verify driver exists and hasn't been enrolled yet
-      const { data: driver, error: fetchErr } = await supabase
-        .from("drivers")
-        .select("id, full_name, face_embedding, status")
-        .eq("id", id)
-        .single();
+      let driver, fetchErr;
+
+      if (isLocal) {
+        const result = await db.query(
+          `SELECT id, full_name, face_embedding, status FROM drivers WHERE id = $1`,
+          [id]
+        );
+        driver = result.rows[0] || null;
+        if (!driver) fetchErr = { message: "not found" };
+      } else {
+        const res2 = await db
+          .from("drivers")
+          .select("id, full_name, face_embedding, status")
+          .eq("id", id)
+          .single();
+        driver = res2.data;
+        fetchErr = res2.error;
+      }
 
       if (fetchErr || !driver) {
         return res.status(404).json({
@@ -654,15 +820,23 @@ router.post(
         num_images: files.length,
       };
 
-      const { error: updateErr } = await supabase
-        .from("drivers")
-        .update({
-          face_embedding: embeddingPayload,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", id);
+      if (isLocal) {
+        const updateErr2 = await db.query(
+          `UPDATE drivers SET face_embedding = $1, updated_at = NOW() WHERE id = $2`,
+          [JSON.stringify(embeddingPayload), id]
+        ).catch((e) => e);
+        if (updateErr2 instanceof Error) throw updateErr2;
+      } else {
+        const { error: updateErr } = await db
+          .from("drivers")
+          .update({
+            face_embedding: embeddingPayload,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", id);
 
-      if (updateErr) throw updateErr;
+        if (updateErr) throw updateErr;
+      }
 
       console.log(
         `[POST /api/drivers/:id/enroll-face] Enrollment complete for driver ${id}`,

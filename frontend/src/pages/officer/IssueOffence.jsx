@@ -644,6 +644,7 @@ function Step4Confirm({
   onViewProfile,
   onDashboard,
 }) {
+  console.log(result)
   const { offence, driver, calculation } = result;
 
   function formatDateTime(dateStr) {
@@ -843,14 +844,14 @@ export default function IssueOffence() {
         notes: notes.trim() || undefined,
       });
 
-      const data = res.data.data;
-      // Attach officer info from JWT user context for the receipt
-      data.officer = {
+      const payload = res.data.data; 
+      const unwrappedData = payload.issue_offence_transaction || payload; 
+      unwrappedData.officer = { 
         id: user?.id,
         full_name: user?.full_name,
-        officer_id: user?.officer_id,
-      };
-      setResult(data);
+        officer_id: user?.officer_id 
+      }; 
+      setResult(unwrappedData);
       setStep(4);
     } catch (err) {
       const msg =

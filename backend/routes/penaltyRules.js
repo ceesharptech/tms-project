@@ -1,5 +1,6 @@
 const express = require("express");
-const supabase = require("../services/supabase");
+const db = require("../utils/db");
+const { isLocal } = require("../utils/db");
 const { authenticateToken } = require("../middleware/auth");
 const { requireRole } = require("../middleware/roleCheck");
 
@@ -14,10 +15,21 @@ function logError(endpoint, context, err) {
 // ── GET /api/penalty-rules — list all ─────────────────────────────────────────
 router.get("/", requireRole(["officer", "admin"]), async (req, res) => {
   try {
-    const { data, error } = await supabase
-      .from("penalty_rules")
-      .select("*")
-      .order("min_strikes", { ascending: true });
+    let data, error;
+
+    if (isLocal) {
+      const result = await db.query(
+        `SELECT * FROM penalty_rules ORDER BY min_strikes`
+      );
+      data = result.rows;
+    } else {
+      const res2 = await db
+        .from("penalty_rules")
+        .select("*")
+        .order("min_strikes", { ascending: true });
+      data = res2.data;
+      error = res2.error;
+    }
 
     if (error) throw error;
 
@@ -88,11 +100,21 @@ router.post("/", requireRole(["admin"]), async (req, res) => {
     }
 
     // Check for overlapping ranges
-    const { data: existing } = await supabase
-      .from("penalty_rules")
-      .select("id, min_strikes, max_strikes");
+    let existingRules;
 
-    const overlap = (existing ?? []).find(
+    if (isLocal) {
+      const result = await db.query(
+        `SELECT id, min_strikes, max_strikes FROM penalty_rules`
+      );
+      existingRules = result.rows;
+    } else {
+      const res2 = await db
+        .from("penalty_rules")
+        .select("id, min_strikes, max_strikes");
+      existingRules = res2.data;
+    }
+
+    const overlap = (existingRules ?? []).find(
       (r) => minVal <= r.max_strikes && maxVal >= r.min_strikes,
     );
 
@@ -104,16 +126,30 @@ router.post("/", requireRole(["admin"]), async (req, res) => {
       });
     }
 
-    const { data, error } = await supabase
-      .from("penalty_rules")
-      .insert({
-        min_strikes: minVal,
-        max_strikes: maxVal,
-        fine_multiplier: multiplier,
-        status_flag: status_flag.trim(),
-      })
-      .select()
-      .single();
+    let data, error;
+
+    if (isLocal) {
+      const result = await db.query(
+        `INSERT INTO penalty_rules (min_strikes, max_strikes, fine_multiplier, status_flag)
+         VALUES ($1, $2, $3, $4)
+         RETURNING *`,
+        [minVal, maxVal, multiplier, status_flag.trim()]
+      );
+      data = result.rows[0];
+    } else {
+      const res2 = await db
+        .from("penalty_rules")
+        .insert({
+          min_strikes: minVal,
+          max_strikes: maxVal,
+          fine_multiplier: multiplier,
+          status_flag: status_flag.trim(),
+        })
+        .select()
+        .single();
+      data = res2.data;
+      error = res2.error;
+    }
 
     if (error) throw error;
 
@@ -134,11 +170,25 @@ router.put("/:id", requireRole(["admin"]), async (req, res) => {
     const { id } = req.params;
     const { min_strikes, max_strikes, fine_multiplier, status_flag } = req.body;
 
-    const { data: existing, error: fetchErr } = await supabase
-      .from("penalty_rules")
-      .select("*")
-      .eq("id", id)
-      .single();
+    // Fetch existing record
+    let existing, fetchErr;
+
+    if (isLocal) {
+      const result = await db.query(
+        `SELECT * FROM penalty_rules WHERE id = $1`,
+        [id]
+      );
+      existing = result.rows[0] || null;
+      if (!existing) fetchErr = { message: "not found" };
+    } else {
+      const res2 = await db
+        .from("penalty_rules")
+        .select("*")
+        .eq("id", id)
+        .single();
+      existing = res2.data;
+      fetchErr = res2.error;
+    }
 
     if (fetchErr || !existing) {
       return res.status(404).json({
@@ -197,10 +247,21 @@ router.put("/:id", requireRole(["admin"]), async (req, res) => {
     }
 
     // Check for overlapping ranges (exclude current rule)
-    const { data: allRules } = await supabase
-      .from("penalty_rules")
-      .select("id, min_strikes, max_strikes")
-      .neq("id", id);
+    let allRules;
+
+    if (isLocal) {
+      const result = await db.query(
+        `SELECT id, min_strikes, max_strikes FROM penalty_rules WHERE id != $1`,
+        [id]
+      );
+      allRules = result.rows;
+    } else {
+      const res2 = await db
+        .from("penalty_rules")
+        .select("id, min_strikes, max_strikes")
+        .neq("id", id);
+      allRules = res2.data;
+    }
 
     const overlap = (allRules ?? []).find(
       (r) => minVal <= r.max_strikes && maxVal >= r.min_strikes,
@@ -220,12 +281,28 @@ router.put("/:id", requireRole(["admin"]), async (req, res) => {
     if (fine_multiplier !== undefined) updates.fine_multiplier = multiplier;
     if (status_flag !== undefined) updates.status_flag = status_flag.trim();
 
-    const { data, error } = await supabase
-      .from("penalty_rules")
-      .update(updates)
-      .eq("id", id)
-      .select()
-      .single();
+    let data, error;
+
+    if (isLocal) {
+      const setClauses = Object.keys(updates)
+        .map((key, i) => `${key} = $${i + 2}`)
+        .join(", ");
+      const values = [id, ...Object.values(updates)];
+      const result = await db.query(
+        `UPDATE penalty_rules SET ${setClauses} WHERE id = $1 RETURNING *`,
+        values
+      );
+      data = result.rows[0];
+    } else {
+      const res2 = await db
+        .from("penalty_rules")
+        .update(updates)
+        .eq("id", id)
+        .select()
+        .single();
+      data = res2.data;
+      error = res2.error;
+    }
 
     if (error) throw error;
 
@@ -245,11 +322,24 @@ router.delete("/:id", requireRole(["admin"]), async (req, res) => {
   try {
     const { id } = req.params;
 
-    const { data: existing, error: fetchErr } = await supabase
-      .from("penalty_rules")
-      .select("id")
-      .eq("id", id)
-      .single();
+    let existing, fetchErr;
+
+    if (isLocal) {
+      const result = await db.query(
+        `SELECT id FROM penalty_rules WHERE id = $1`,
+        [id]
+      );
+      existing = result.rows[0] || null;
+      if (!existing) fetchErr = { message: "not found" };
+    } else {
+      const res2 = await db
+        .from("penalty_rules")
+        .select("id")
+        .eq("id", id)
+        .single();
+      existing = res2.data;
+      fetchErr = res2.error;
+    }
 
     if (fetchErr || !existing) {
       return res.status(404).json({
@@ -259,10 +349,17 @@ router.delete("/:id", requireRole(["admin"]), async (req, res) => {
       });
     }
 
-    const { error } = await supabase
-      .from("penalty_rules")
-      .delete()
-      .eq("id", id);
+    let error;
+
+    if (isLocal) {
+      await db.query(`DELETE FROM penalty_rules WHERE id = $1`, [id]);
+    } else {
+      const res2 = await db
+        .from("penalty_rules")
+        .delete()
+        .eq("id", id);
+      error = res2.error;
+    }
 
     if (error) throw error;
 

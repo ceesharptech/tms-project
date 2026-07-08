@@ -97,15 +97,25 @@ function DriverAvatar({ driver }) {
 
   if (driver.profile_picture_url) {
     return (
-      <img
-        src={driver.profile_picture_url}
-        alt={driver.full_name}
-        onError={(e) => {
-          e.currentTarget.style.display = "none";
-          e.currentTarget.nextElementSibling.style.display = "flex";
-        }}
-        className="w-9 h-9 rounded-full object-cover border border-gray-200 shrink-0"
-      />
+      <div>
+        <img
+          src={driver.profile_picture_url}
+          alt={driver.full_name}
+          onError={(e) => {
+            e.currentTarget.style.display = "none";
+            e.currentTarget.nextElementSibling.style.display = "flex";
+          }}
+          className="w-9 h-9 rounded-full object-cover border border-gray-200 shrink-0"
+        />
+
+        {/* Display Initials Circle if profile picture does not load */}
+         <div
+          className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+          style={{ backgroundColor: `hsl(${hue}, 55%, 50%)` }}
+        >
+          {initials}
+    </div>
+      </div>
     );
   }
 

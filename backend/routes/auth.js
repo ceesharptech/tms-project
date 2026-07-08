@@ -1,6 +1,7 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
-const supabase = require("../services/supabase");
+const db = require("../utils/db");
+const { isLocal } = require("../utils/db");
 const {
   generateAccessToken,
   generateRefreshToken,
@@ -33,11 +34,31 @@ router.post("/login", async (req, res) => {
   const isOfficerId = /^\d{1,6}$/.test(identifier.trim());
   const field = isOfficerId ? "officer_id" : "email";
 
-  const { data: users, error: dbError } = await supabase
-    .from("users")
-    .select("id, officer_id, email, password_hash, role, full_name")
-    .eq(field, identifier.trim())
-    .limit(1);
+  let users, dbError;
+
+  if (isLocal) {
+    try {
+      const col = isOfficerId ? "officer_id" : "email";
+      const result = await db.query(
+        `SELECT id, officer_id, email, password_hash, role, full_name
+         FROM users
+         WHERE ${col} = $1
+         LIMIT 1`,
+        [identifier.trim()]
+      );
+      users = result.rows;
+    } catch (err) {
+      dbError = err;
+    }
+  } else {
+    const res2 = await db
+      .from("users")
+      .select("id, officer_id, email, password_hash, role, full_name")
+      .eq(field, identifier.trim())
+      .limit(1);
+    users = res2.data;
+    dbError = res2.error;
+  }
 
   if (dbError) {
     console.error("DB error during login:", dbError);
@@ -121,11 +142,30 @@ router.post("/refresh", async (req, res) => {
   }
 
   // Fetch fresh user data so the new access token reflects current state
-  const { data: users, error: dbError } = await supabase
-    .from("users")
-    .select("id, officer_id, email, role, full_name")
-    .eq("id", decoded.sub)
-    .limit(1);
+  let users, dbError;
+
+  if (isLocal) {
+    try {
+      const result = await db.query(
+        `SELECT id, officer_id, email, role, full_name
+         FROM users
+         WHERE id = $1
+         LIMIT 1`,
+        [decoded.sub]
+      );
+      users = result.rows;
+    } catch (err) {
+      dbError = err;
+    }
+  } else {
+    const res2 = await db
+      .from("users")
+      .select("id, officer_id, email, role, full_name")
+      .eq("id", decoded.sub)
+      .limit(1);
+    users = res2.data;
+    dbError = res2.error;
+  }
 
   if (dbError || !users?.[0]) {
     return res.status(401).json({

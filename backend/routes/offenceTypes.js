@@ -1,5 +1,6 @@
 const express = require("express");
-const supabase = require("../services/supabase");
+const db = require("../utils/db");
+const { isLocal } = require("../utils/db");
 const { authenticateToken } = require("../middleware/auth");
 const { requireRole } = require("../middleware/roleCheck");
 
@@ -14,11 +15,22 @@ function logError(endpoint, context, err) {
 // ── GET /api/offence-types — list all ─────────────────────────────────────────
 router.get("/", requireRole(["officer", "admin"]), async (req, res) => {
   try {
-    const { data, error } = await supabase
-      .from("offence_types")
-      .select("*")
-      .order("severity", { ascending: true })
-      .order("name", { ascending: true });
+    let data, error;
+
+    if (isLocal) {
+      const result = await db.query(
+        `SELECT * FROM offence_types ORDER BY severity, name`
+      );
+      data = result.rows;
+    } else {
+      const res2 = await db
+        .from("offence_types")
+        .select("*")
+        .order("severity", { ascending: true })
+        .order("name", { ascending: true });
+      data = res2.data;
+      error = res2.error;
+    }
 
     if (error) throw error;
 
@@ -36,6 +48,7 @@ router.get("/", requireRole(["officer", "admin"]), async (req, res) => {
 // ── POST /api/offence-types — create ─────────────────────────────────────────
 router.post("/", requireRole(["admin"]), async (req, res) => {
   try {
+    console.log(req.body);
     const { name, description, base_fine, strike_weight, severity } = req.body;
 
     // Validation
@@ -85,11 +98,22 @@ router.post("/", requireRole(["admin"]), async (req, res) => {
     }
 
     // Check for duplicate name
-    const { data: existing } = await supabase
-      .from("offence_types")
-      .select("id")
-      .ilike("name", name.trim())
-      .maybeSingle();
+    let existing;
+
+    if (isLocal) {
+      const result = await db.query(
+        `SELECT id FROM offence_types WHERE LOWER(name) = LOWER($1)`,
+        [name.trim()]
+      );
+      existing = result.rows[0] || null;
+    } else {
+      const res2 = await db
+        .from("offence_types")
+        .select("id")
+        .ilike("name", name.trim())
+        .maybeSingle();
+      existing = res2.data;
+    }
 
     if (existing) {
       return res.status(409).json({
@@ -99,18 +123,32 @@ router.post("/", requireRole(["admin"]), async (req, res) => {
       });
     }
 
-    const { data, error } = await supabase
-      .from("offence_types")
-      .insert({
-        name: name.trim(),
-        description: description.trim(),
-        base_fine: fine,
-        strike_weight: weight,
-        severity,
-        is_active: true,
-      })
-      .select()
-      .single();
+    let data, error;
+
+    if (isLocal) {
+      const result = await db.query(
+        `INSERT INTO offence_types (name, description, base_fine, strike_weight, severity, is_active)
+         VALUES ($1, $2, $3, $4, $5, true)
+         RETURNING *`,
+        [name.trim(), description.trim(), fine, weight, severity]
+      );
+      data = result.rows[0];
+    } else {
+      const res2 = await db
+        .from("offence_types")
+        .insert({
+          name: name.trim(),
+          description: description.trim(),
+          base_fine: fine,
+          strike_weight: weight,
+          severity,
+          is_active: true,
+        })
+        .select()
+        .single();
+      data = res2.data;
+      error = res2.error;
+    }
 
     if (error) throw error;
 
@@ -132,11 +170,24 @@ router.put("/:id", requireRole(["admin"]), async (req, res) => {
     const { name, description, base_fine, strike_weight, severity } = req.body;
 
     // Check record exists
-    const { data: existing, error: fetchErr } = await supabase
-      .from("offence_types")
-      .select("id, name")
-      .eq("id", id)
-      .single();
+    let existing, fetchErr;
+
+    if (isLocal) {
+      const result = await db.query(
+        `SELECT id, name FROM offence_types WHERE id = $1`,
+        [id]
+      );
+      existing = result.rows[0] || null;
+      if (!existing) fetchErr = { message: "not found" };
+    } else {
+      const res2 = await db
+        .from("offence_types")
+        .select("id, name")
+        .eq("id", id)
+        .single();
+      existing = res2.data;
+      fetchErr = res2.error;
+    }
 
     if (fetchErr || !existing) {
       return res.status(404).json({
@@ -195,12 +246,23 @@ router.put("/:id", requireRole(["admin"]), async (req, res) => {
 
     // Check duplicate name (excluding current record)
     if (name && name.trim().toLowerCase() !== existing.name.toLowerCase()) {
-      const { data: dupe } = await supabase
-        .from("offence_types")
-        .select("id")
-        .ilike("name", name.trim())
-        .neq("id", id)
-        .maybeSingle();
+      let dupe;
+
+      if (isLocal) {
+        const result = await db.query(
+          `SELECT id FROM offence_types WHERE LOWER(name) = LOWER($1) AND id != $2`,
+          [name.trim(), id]
+        );
+        dupe = result.rows[0] || null;
+      } else {
+        const res2 = await db
+          .from("offence_types")
+          .select("id")
+          .ilike("name", name.trim())
+          .neq("id", id)
+          .maybeSingle();
+        dupe = res2.data;
+      }
 
       if (dupe) {
         return res.status(409).json({
@@ -219,12 +281,28 @@ router.put("/:id", requireRole(["admin"]), async (req, res) => {
       updates.strike_weight = Number(strike_weight);
     if (severity !== undefined) updates.severity = severity;
 
-    const { data, error } = await supabase
-      .from("offence_types")
-      .update(updates)
-      .eq("id", id)
-      .select()
-      .single();
+    let data, error;
+
+    if (isLocal) {
+      const setClauses = Object.keys(updates)
+        .map((key, i) => `${key} = $${i + 2}`)
+        .join(", ");
+      const values = [id, ...Object.values(updates)];
+      const result = await db.query(
+        `UPDATE offence_types SET ${setClauses} WHERE id = $1 RETURNING *`,
+        values
+      );
+      data = result.rows[0];
+    } else {
+      const res2 = await db
+        .from("offence_types")
+        .update(updates)
+        .eq("id", id)
+        .select()
+        .single();
+      data = res2.data;
+      error = res2.error;
+    }
 
     if (error) throw error;
 
@@ -244,11 +322,24 @@ router.delete("/:id", requireRole(["admin"]), async (req, res) => {
   try {
     const { id } = req.params;
 
-    const { data: existing, error: fetchErr } = await supabase
-      .from("offence_types")
-      .select("id, is_active")
-      .eq("id", id)
-      .single();
+    let existing, fetchErr;
+
+    if (isLocal) {
+      const result = await db.query(
+        `SELECT id, is_active FROM offence_types WHERE id = $1`,
+        [id]
+      );
+      existing = result.rows[0] || null;
+      if (!existing) fetchErr = { message: "not found" };
+    } else {
+      const res2 = await db
+        .from("offence_types")
+        .select("id, is_active")
+        .eq("id", id)
+        .single();
+      existing = res2.data;
+      fetchErr = res2.error;
+    }
 
     if (fetchErr || !existing) {
       return res.status(404).json({
@@ -260,12 +351,24 @@ router.delete("/:id", requireRole(["admin"]), async (req, res) => {
 
     const newActive = !existing.is_active;
 
-    const { data, error } = await supabase
-      .from("offence_types")
-      .update({ is_active: newActive })
-      .eq("id", id)
-      .select()
-      .single();
+    let data, error;
+
+    if (isLocal) {
+      const result = await db.query(
+        `UPDATE offence_types SET is_active = $1 WHERE id = $2 RETURNING *`,
+        [newActive, id]
+      );
+      data = result.rows[0];
+    } else {
+      const res2 = await db
+        .from("offence_types")
+        .update({ is_active: newActive })
+        .eq("id", id)
+        .select()
+        .single();
+      data = res2.data;
+      error = res2.error;
+    }
 
     if (error) throw error;
 
