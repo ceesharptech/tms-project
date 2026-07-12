@@ -1,121 +1,75 @@
-# Traffic Offence Management System (T.O.M.S)
+# TMS — Digital Driver Identification and Traffic Offence Penalty System
 
-A web-based enforcement and driver identification platform using facial recognition and a centralized strike-based penalty engine.
+A web-based enforcement platform for digitally identifying drivers using facial recognition
+and managing traffic offence penalties through a centralised strike-based system.
 
----
+Built as a final year university project.
+
+## Tech Stack
+
+- **Frontend:** React 18 + Vite + Tailwind CSS
+- **Backend:** Node.js + Express.js
+- **Face Recognition:** Python FastAPI + DeepFace (ArcFace model)
+- **Database:** PostgreSQL 17
+
+## Prerequisites
+
+- [Docker Desktop](https://docs.docker.com/desktop/) installed and running
+- Git
+
+## Running the Application
+
+### 1. Clone the repository
+
+    git clone https://github.com/ceesharptech/tms-project.git
+    cd ddits
+
+### 2. Set up environment variables
+
+    cp .env.example .env
+
+Open `.env` and fill in the following required values:
+
+| Variable | Description |
+|---|---|
+| `POSTGRES_PASSWORD` | Password for the local database |
+| `JWT_ACCESS_SECRET` | Long random string for signing access tokens |
+| `JWT_REFRESH_SECRET` | Long random string for signing refresh tokens |
+
+All other values can be left as their defaults for local development.
+
+### 3. Start the application
+
+    docker compose up --build
+
+> **First run note:** The face recognition service will take several minutes to build
+> as it pre-downloads the ArcFace model (~500MB). This only happens once.
+
+### 4. Access the application
+
+| Service | URL |
+|---|---|
+| Frontend | http://localhost |
+| Backend API | http://localhost:5000 |
+| Face Service | http://localhost:8000 |
+
+### Default credentials (seeded automatically)
+
+| Role | Email | Password |
+|---|---|---|
+| Admin | admin@ddits.com | admin12345 |
+| Officer | officer@ddits.com | Officer123! |
+
+## Stopping the Application
+
+    docker compose down          # stop (data is preserved)
+    docker compose down -v       # stop and wipe database (full reset)
 
 ## Architecture
 
-| Service      | Tech                           | Port |
-| ------------ | ------------------------------ | ---- |
-| Frontend     | React 18 + Vite + Tailwind CSS | 5173 |
-| Backend      | Node.js + Express.js           | 5000 |
-| Face Service | Python + FastAPI + DeepFace    | 8000 |
-| Database     | Supabase (PostgreSQL)          | —    |
+The system runs as four Docker containers:
 
----
-
-## Quick Start
-
-### Prerequisites
-
-- Node.js v18+
-- Python 3.13+
-- npm v9+
-
----
-
-### 1. Clone & navigate
-
-```bash
-git clone <repo-url>
-cd tms-project
-```
-
----
-
-### 2. Backend (Express API)
-
-```bash
-cd backend
-cp .env.example .env          # fill in your Supabase keys & JWT secrets
-npm install
-node server.js                   # starts on http://localhost:5000
-```
-
-Health check: `GET http://localhost:5000/health`
-
----
-
-### 3. Frontend (React + Vite)
-
-```bash
-cd frontend
-cp .env.example .env          # set VITE_API_URL=http://localhost:5000/api
-npm install
-npm run dev                   # starts on http://localhost:5173
-```
-
----
-
-### 4. Face Recognition Service (FastAPI)
-
-```bash
-cd face-service
-cp .env.example .env          # adjust model settings if needed
-python -m venv venv
-# Windows:
-venv\Scripts\activate
-# macOS/Linux:
-source venv/bin/activate
-
-pip install -r requirements.txt
-uvicorn main:app --reload --port 8000
-```
-
-> **Note:** Full ML dependencies (`deepface`, `opencv-python`, `tf-keras`) are installed via `requirements.txt` but are only _used_ starting from Phase 3.
-
-Health check: `GET http://localhost:8000/health`
-
----
-
-### 5. Run all services simultaneously
-
-Open three terminals and run each service as shown above, or use the convenience commands:
-
-```bash
-# Terminal 1 – Backend
-cd backend && npm run dev
-
-# Terminal 2 – Frontend
-cd frontend && npm run dev
-
-# Terminal 3 – Face Service
-cd face-service && venv/Scripts/activate && uvicorn main:app --reload --port 8000
-```
-
----
-
-## Environment Variables
-
-Copy `.env.example` → `.env` in each service directory and fill in the values.
-
-| Service      | File                | Key variables                                        |
-| ------------ | ------------------- | ---------------------------------------------------- |
-| Backend      | `backend/.env`      | `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `JWT_SECRET` |
-| Frontend     | `frontend/.env`     | `VITE_API_URL`                                       |
-| Face Service | `face-service/.env` | `MODEL_NAME`, `FACE_CONFIDENCE_THRESHOLD`            |
-
----
-
-## Project Structure
-
-```
-tms-project/
-├── frontend/          # React + Vite + Tailwind
-├── backend/           # Express.js API
-├── face-service/      # Python FastAPI + DeepFace
-├── test-data/         # Sample drivers, offence types, face images
-├── docs/              # Project documentation & schema
-└── .gitignore
-```
+- `tms-postgres` — PostgreSQL database (auto-migrated on first run)
+- `tms-backend` — Express.js REST API on port 5000
+- `tms-face-service` — Python FastAPI microservice on port 8000
+- `tms-frontend` — React app served via Nginx on port 80
