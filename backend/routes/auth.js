@@ -44,7 +44,7 @@ router.post("/login", async (req, res) => {
          FROM users
          WHERE ${col} = $1
          LIMIT 1`,
-        [identifier.trim()]
+        [identifier.trim()],
       );
       users = result.rows;
     } catch (err) {
@@ -151,7 +151,7 @@ router.post("/refresh", async (req, res) => {
          FROM users
          WHERE id = $1
          LIMIT 1`,
-        [decoded.sub]
+        [decoded.sub],
       );
       users = result.rows;
     } catch (err) {

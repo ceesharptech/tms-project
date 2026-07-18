@@ -37,7 +37,7 @@ services:
       PORT: ${PORT}
       JWT_SECRET: ${JWT_SECRET}
       REFRESH_TOKEN_SECRET: ${REFRESH_TOKEN_SECRET}
-      FACE_SERVICE_URL: ${FACE_SERVICE_URL}
+      PYTHON_SERVICE_URL: ${PYTHON_SERVICE_URL}
       FRONTEND_URL: "http://localhost:8080"
     ports:
       - "5000:5000"

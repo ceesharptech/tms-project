@@ -11,6 +11,7 @@ const FACE_SERVICE_URL =
  * @param {Array<{buffer: Buffer, originalname: string, mimetype: string}>} files
  * @returns {{ embedding: number[], model: string, num_images: number }}
  */
+
 async function enrollFace(driverId, files) {
   const form = new FormData();
   form.append("driver_id", driverId);
