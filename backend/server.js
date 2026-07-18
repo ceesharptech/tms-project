@@ -1,10 +1,10 @@
 // Load .env.local first (if present) so local overrides take effect before
 // any module reads process.env. Falls back to .env for production/Supabase mode.
-const { existsSync } = require('fs')
-if (existsSync('.env.local')) {
-  require('dotenv').config({ path: '.env.local' })
+const { existsSync } = require("fs");
+if (existsSync(".env.local")) {
+  require("dotenv").config({ path: ".env.local" });
 } else {
-  require('dotenv').config()
+  require("dotenv").config();
 }
 const express = require("express");
 const cors = require("cors");
@@ -18,7 +18,7 @@ const PORT = process.env.PORT || 5000;
 // ── Global middleware ────────────────────────────────────────────────────────
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: process.env.FRONTEND_URL || "http://localhost:8080",
     credentials: true,
   }),
 );

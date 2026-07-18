@@ -1,10 +1,9 @@
 # docker-compose.yml
 
 services:
-
   # ── PostgreSQL Database ──────────────────────────────────────
   tms-postgres:
-    image: postgres:18.4-alpine
+    image: postgres:16-alpine
     container_name: tms-postgres
     restart: unless-stopped
     environment:
@@ -18,9 +17,10 @@ services:
       - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 30s
 
   # ── Express.js Backend ───────────────────────────────────────
   tms-backend:
@@ -32,19 +32,20 @@ services:
     env_file: .env
     environment:
       USE_LOCAL_DB: "true"
-      DATABASE_URL: ${DATABASE_URL}
+      LOCAL_DATABASE_URL: ${LOCAL_DATABASE_URL}
       NODE_ENV: ${NODE_ENV}
       PORT: ${PORT}
-      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
-      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_SECRET: ${JWT_SECRET}
+      REFRESH_TOKEN_SECRET: ${REFRESH_TOKEN_SECRET}
       FACE_SERVICE_URL: ${FACE_SERVICE_URL}
+      FRONTEND_URL: "http://localhost:8080"
     ports:
       - "5000:5000"
     depends_on:
       tms-postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:5000/api/health || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5000/health || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -76,7 +77,7 @@ services:
     container_name: tms-frontend
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "8080:80"
     depends_on:
       - tms-backend
 

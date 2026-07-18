@@ -43,7 +43,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5000", "https://tmsportalng.tech", "http://localhost:5173", "https://tms-backend-production-45c0.up.railway.app/"],
+    allow_origins=["http://localhost:5000", "http://localhost:8080", "http://localhost:5173", "https://tms-backend-production-45c0.up.railway.app/"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
