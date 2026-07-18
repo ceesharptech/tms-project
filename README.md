@@ -30,11 +30,11 @@ Built as a final year university project.
 
 Open `.env` and fill in the following required values:
 
-| Variable | Description |
-|---|---|
-| `POSTGRES_PASSWORD` | Password for the local database |
-| `JWT_ACCESS_SECRET` | Long random string for signing access tokens |
-| `JWT_REFRESH_SECRET` | Long random string for signing refresh tokens |
+| Variable               | Description                                   |
+| ---------------------- | --------------------------------------------- |
+| `POSTGRES_PASSWORD`    | Password for the local database               |
+| `JWT_SECRET`           | Long random string for signing access tokens  |
+| `REFRESH_TOKEN_SECRET` | Long random string for signing refresh tokens |
 
 All other values can be left as their defaults for local development.
 
@@ -47,17 +47,17 @@ All other values can be left as their defaults for local development.
 
 ### 4. Access the application
 
-| Service | URL |
-|---|---|
-| Frontend | http://localhost |
-| Backend API | http://localhost:5000 |
+| Service      | URL                   |
+| ------------ | --------------------- |
+| Frontend     | http://localhost:8080 |
+| Backend API  | http://localhost:5000 |
 | Face Service | http://localhost:8000 |
 
 ### Default credentials (seeded automatically)
 
-| Role | Email | Password |
-|---|---|---|
-| Admin | admin@ddits.com | admin12345 |
+| Role    | Email             | Password    |
+| ------- | ----------------- | ----------- |
+| Admin   | admin@ddits.com   | admin12345  |
 | Officer | officer@ddits.com | Officer123! |
 
 ## Stopping the Application
